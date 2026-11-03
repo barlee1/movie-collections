@@ -6,13 +6,8 @@
 	objectVersion = 110;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		E66D21063089BA9200E6EB85 /* Project 1 OPTION B) Personal Project - Rewind Club.xlsx in Resources */ = {isa = PBXBuildFile; fileRef = E66D21053089BA9200E6EB85 /* Project 1 OPTION B) Personal Project - Rewind Club.xlsx */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXFileReference section */
 		E65BF93930656BC70054AAF0 /* MovieCollection.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MovieCollection.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		E66D21053089BA9200E6EB85 /* Project 1 OPTION B) Personal Project - Rewind Club.xlsx */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Project 1 OPTION B) Personal Project - Rewind Club.xlsx"; sourceTree = "<group>"; };
 		E68FA8763075986F00E16121 /* MovieCollectionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MovieCollectionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		E68FA8813075987300E16121 /* MovieCollectionUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MovieCollectionUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -73,7 +68,6 @@
 				E65BF93B30656BC70054AAF0 /* MovieCollection */,
 				E68FA8773075986F00E16121 /* MovieCollectionTests */,
 				E68FA8823075987300E16121 /* MovieCollectionUITests */,
-				E66D21053089BA9200E6EB85 /* Project 1 OPTION B) Personal Project - Rewind Club.xlsx */,
 				E65BF93A30656BC70054AAF0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -191,7 +185,6 @@
 		E65BF93730656BC70054AAF0 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
-				E66D21063089BA9200E6EB85 /* Project 1 OPTION B) Personal Project - Rewind Club.xlsx in Resources */,
 			);
 		};
 		E68FA8743075986F00E16121 /* Resources */ = {
