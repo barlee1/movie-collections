@@ -6,20 +6,60 @@
 	objectVersion = 110;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		E66D21063089BA9200E6EB85 /* Project 1 OPTION B) Personal Project - Rewind Club.xlsx in Resources */ = {isa = PBXBuildFile; fileRef = E66D21053089BA9200E6EB85 /* Project 1 OPTION B) Personal Project - Rewind Club.xlsx */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		E65BF93930656BC70054AAF0 /* MovieCollection.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MovieCollection.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E66D21053089BA9200E6EB85 /* Project 1 OPTION B) Personal Project - Rewind Club.xlsx */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Project 1 OPTION B) Personal Project - Rewind Club.xlsx"; sourceTree = "<group>"; };
+		E68FA8763075986F00E16121 /* MovieCollectionTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MovieCollectionTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E68FA8813075987300E16121 /* MovieCollectionUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MovieCollectionUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		E68FA80F307569B600E16121 /* Exceptions for "MovieCollection" folder in "MovieCollection" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = E65BF93830656BC70054AAF0 /* MovieCollection */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		E65BF93B30656BC70054AAF0 /* MovieCollection */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				E68FA80F307569B600E16121 /* Exceptions for "MovieCollection" folder in "MovieCollection" target */,
+			);
 			path = MovieCollection;
+			sourceTree = "<group>";
+		};
+		E68FA8773075986F00E16121 /* MovieCollectionTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MovieCollectionTests;
+			sourceTree = "<group>";
+		};
+		E68FA8823075987300E16121 /* MovieCollectionUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MovieCollectionUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		E65BF93630656BC70054AAF0 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		E68FA8733075986F00E16121 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		E68FA87E3075987300E16121 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
 			);
@@ -31,6 +71,9 @@
 			isa = PBXGroup;
 			children = (
 				E65BF93B30656BC70054AAF0 /* MovieCollection */,
+				E68FA8773075986F00E16121 /* MovieCollectionTests */,
+				E68FA8823075987300E16121 /* MovieCollectionUITests */,
+				E66D21053089BA9200E6EB85 /* Project 1 OPTION B) Personal Project - Rewind Club.xlsx */,
 				E65BF93A30656BC70054AAF0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -39,6 +82,8 @@
 			isa = PBXGroup;
 			children = (
 				E65BF93930656BC70054AAF0 /* MovieCollection.app */,
+				E68FA8763075986F00E16121 /* MovieCollectionTests.xctest */,
+				E68FA8813075987300E16121 /* MovieCollectionUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -64,6 +109,42 @@
 			productReference = E65BF93930656BC70054AAF0 /* MovieCollection.app */;
 			productType = "com.apple.product-type.application";
 		};
+		E68FA8753075986F00E16121 /* MovieCollectionTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E68FA87A3075986F00E16121 /* Build configuration list for PBXNativeTarget "MovieCollectionTests" */;
+			buildPhases = (
+				E68FA8723075986F00E16121 /* Sources */,
+				E68FA8733075986F00E16121 /* Frameworks */,
+				E68FA8743075986F00E16121 /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				E68FA8773075986F00E16121 /* MovieCollectionTests */,
+			);
+			name = MovieCollectionTests;
+			productName = MovieCollectionTests;
+			productReference = E68FA8763075986F00E16121 /* MovieCollectionTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		E68FA8803075987300E16121 /* MovieCollectionUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E68FA8853075987300E16121 /* Build configuration list for PBXNativeTarget "MovieCollectionUITests" */;
+			buildPhases = (
+				E68FA87D3075987300E16121 /* Sources */,
+				E68FA87E3075987300E16121 /* Frameworks */,
+				E68FA87F3075987300E16121 /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				E68FA8823075987300E16121 /* MovieCollectionUITests */,
+			);
+			name = MovieCollectionUITests;
+			productName = MovieCollectionUITests;
+			productReference = E68FA8813075987300E16121 /* MovieCollectionUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -72,9 +153,15 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2700;
-				LastUpgradeCheck = 2700;
+				LastUpgradeCheck = 2710;
 				TargetAttributes = {
 					E65BF93830656BC70054AAF0 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					E68FA8753075986F00E16121 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					E68FA8803075987300E16121 = {
 						CreatedOnToolsVersion = 27.0;
 					};
 				};
@@ -94,6 +181,8 @@
 			projectRoot = "";
 			targets = (
 				E65BF93830656BC70054AAF0 /* MovieCollection */,
+				E68FA8753075986F00E16121 /* MovieCollectionTests */,
+				E68FA8803075987300E16121 /* MovieCollectionUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -102,12 +191,33 @@
 		E65BF93730656BC70054AAF0 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
+				E66D21063089BA9200E6EB85 /* Project 1 OPTION B) Personal Project - Rewind Club.xlsx in Resources */,
+			);
+		};
+		E68FA8743075986F00E16121 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		E68FA87F3075987300E16121 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
 			);
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		E65BF93530656BC70054AAF0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		E68FA8723075986F00E16121 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		E68FA87D3075987300E16121 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			files = (
 			);
@@ -173,6 +283,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -229,6 +340,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -243,6 +355,11 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MovieCollection/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Rewind Club";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Rewind Club reads the title on a movie case so you can add it to your shelf. Everything is processed on your phone.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -256,12 +373,14 @@
 				PRODUCT_BUNDLE_IDENTIFIER = brownk1.MovieCollection;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -274,6 +393,11 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = MovieCollection/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Rewind Club";
+				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Rewind Club reads the title on a movie case so you can add it to your shelf. Everything is processed on your phone.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -287,12 +411,114 @@
 				PRODUCT_BUNDLE_IDENTIFIER = brownk1.MovieCollection;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		E68FA87B3075986F00E16121 /* Debug configuration for PBXNativeTarget "MovieCollectionTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/MovieCollection.app/MovieCollection.debug.dylib";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.MovieCollectionTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MovieCollection.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MovieCollection";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		E68FA87C3075986F00E16121 /* Release configuration for PBXNativeTarget "MovieCollectionTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(BUILT_PRODUCTS_DIR)/MovieCollection.app/MovieCollection.debug.dylib";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.MovieCollectionTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/MovieCollection.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/MovieCollection";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
+		E68FA8863075987300E16121 /* Debug configuration for PBXNativeTarget "MovieCollectionUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.MovieCollectionUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		E68FA8873075987300E16121 /* Release configuration for PBXNativeTarget "MovieCollectionUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 27.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.MovieCollectionUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = 27.0;
 			};
 			name = Release;
 		};
@@ -312,6 +538,22 @@
 			buildConfigurations = (
 				E65BF94530656BC70054AAF0 /* Debug configuration for PBXNativeTarget "MovieCollection" */,
 				E65BF94630656BC70054AAF0 /* Release configuration for PBXNativeTarget "MovieCollection" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		E68FA87A3075986F00E16121 /* Build configuration list for PBXNativeTarget "MovieCollectionTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E68FA87B3075986F00E16121 /* Debug configuration for PBXNativeTarget "MovieCollectionTests" */,
+				E68FA87C3075986F00E16121 /* Release configuration for PBXNativeTarget "MovieCollectionTests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		E68FA8853075987300E16121 /* Build configuration list for PBXNativeTarget "MovieCollectionUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E68FA8863075987300E16121 /* Debug configuration for PBXNativeTarget "MovieCollectionUITests" */,
+				E68FA8873075987300E16121 /* Release configuration for PBXNativeTarget "MovieCollectionUITests" */,
 			);
 			defaultConfigurationName = Release;
 		};

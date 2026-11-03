@@ -1,0 +1,2 @@
+# TMDB key: copy Secrets.example.plist to MovieCollection/Resources/Secrets.plist and fill it in.
+MovieCollection/Resources/Secrets.plist
