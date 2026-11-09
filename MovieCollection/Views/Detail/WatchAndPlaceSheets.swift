@@ -3,7 +3,7 @@
 //  MovieCollection
 //
 //  Purpose: Two small sheets from the detail screen: logging or editing one
-//  watch (date and an optional note), and moving a disc somewhere else,
+//  watch (date, an optional note, and which family members were there), and moving a disc somewhere else,
 //  including loaning it out.
 //  Used in: TitleDetailView.
 //
@@ -15,20 +15,31 @@ struct WatchSheet: View {
     let titleName: String
     /// The watch being edited, or nil to log a new one.
     let watch: WatchEvent?
-    let onSave: (Date, String) -> Void
+    /// Everyone who could have been there, in the user's order.
+    let family: [FamilyMember]
+    let onSave: (Date, String, [FamilyMember]) -> Void
     let onDelete: () -> Void
 
     @State private var date: Date
     @State private var note: String
+    @State private var viewerIDs: Set<UUID>
     @Environment(\.dismiss) private var dismiss
 
-    init(titleName: String, watch: WatchEvent?, onSave: @escaping (Date, String) -> Void, onDelete: @escaping () -> Void) {
+    init(
+        titleName: String,
+        watch: WatchEvent?,
+        family: [FamilyMember] = [],
+        onSave: @escaping (Date, String, [FamilyMember]) -> Void,
+        onDelete: @escaping () -> Void
+    ) {
         self.titleName = titleName
         self.watch = watch
+        self.family = family
         self.onSave = onSave
         self.onDelete = onDelete
         _date = State(initialValue: watch?.date ?? .now)
         _note = State(initialValue: watch?.note ?? "")
+        _viewerIDs = State(initialValue: Set(watch?.viewers.map(\.id) ?? []))
     }
 
     var body: some View {
@@ -43,6 +54,18 @@ struct WatchSheet: View {
                     .lineLimit(1...4)
                     .pillField()
                     .accessibilityIdentifier("watch.note")
+                if !family.isEmpty {
+                    VStack(alignment: .leading, spacing: 10) {
+                        SectionLabel(text: "Who was there?", size: 12)
+                        FlowLayout(spacing: 8) {
+                            ForEach(family) { member in
+                                FamilyMemberChip(member: member, isOn: viewerIDs.contains(member.id)) {
+                                    viewerIDs.toggle(member.id)
+                                }
+                            }
+                        }
+                    }
+                }
                 if watch != nil {
                     Button("Delete this watch", role: .destructive) {
                         onDelete()
@@ -66,14 +89,14 @@ struct WatchSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        onSave(date, note.trimmed)
+                        onSave(date, note.trimmed, family.filter { viewerIDs.contains($0.id) })
                         dismiss()
                     }
                 }
             }
         }
         .tint(Theme.Colors.action)
-        .presentationDetents([.medium])
+        .presentationDetents(family.isEmpty ? [.medium] : [.medium, .large])
     }
 }
 
@@ -81,26 +104,33 @@ struct WatchSheet: View {
 struct MoveDiscSheet: View {
     let title: OwnedTitle
     let locations: [StorageLocation]
-    let onSave: (StorageLocation, String?, Date) -> Void
+    let onSave: (StorageLocation, String?, Date, Date?) -> Void
 
     @State private var selection: StorageLocation?
     @State private var loanedTo: String
     @State private var loanedOn: Date
+    @State private var dueBack: Date?
     @Environment(\.dismiss) private var dismiss
 
-    init(title: OwnedTitle, locations: [StorageLocation], onSave: @escaping (StorageLocation, String?, Date) -> Void) {
+    /// `onSave` gets the place, who has it, since when, and when it's due back.
+    init(title: OwnedTitle, locations: [StorageLocation], onSave: @escaping (StorageLocation, String?, Date, Date?) -> Void) {
         self.title = title
         self.locations = locations
         self.onSave = onSave
         _selection = State(initialValue: title.storageLocation)
         _loanedTo = State(initialValue: title.loanedTo ?? "")
         _loanedOn = State(initialValue: title.loanedOn ?? .now)
+        _dueBack = State(initialValue: title.loanDueOn)
     }
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                DiscLocationPicker(locations: locations, selection: $selection, loanedTo: $loanedTo, loanedOn: $loanedOn)
+                DiscLocationPicker(
+                    locations: locations, selection: $selection, loanedTo: $loanedTo, loanedOn: $loanedOn,
+                    dueBack: $dueBack)
+                    // Full width, so the sheet doesn't shrink to a narrow column with fewer fields.
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, Theme.Spacing.page)
                     .padding(.vertical, 16)
             }
@@ -115,7 +145,8 @@ struct MoveDiscSheet: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         if let selection {
-                            onSave(selection, selection.role == .loanedOut ? loanedTo : nil, loanedOn)
+                            let isLoan = selection.role == .loanedOut
+                            onSave(selection, isLoan ? loanedTo : nil, loanedOn, isLoan ? dueBack : nil)
                         }
                         dismiss()
                     }

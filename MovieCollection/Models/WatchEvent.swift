@@ -4,20 +4,22 @@
 //
 //  Purpose: One time a title was watched: its date and an optional note.
 //  A title's watches make up its watch history ("1st watch", "2nd watch").
-//  Later, a watch can also record which family members were there.
+//  A watch also records which family members were there.
 //  Used in: OwnedTitle, CollectionStore, the detail screen's watch history.
-//  Part of SchemaV2 (see SchemaVersions.swift); the app uses the WatchEvent typealias.
+//  Part of SchemaV4 (see SchemaVersions.swift); the app uses the WatchEvent typealias.
 //
 
 import Foundation
 import SwiftData
 
-extension SchemaV2 {
+extension SchemaV4 {
     @Model
     final class WatchEvent {
         var date: Date
         var note: String
         var ownedTitle: OwnedTitle?
+        /// Family members who were there (the inverse lives on FamilyMember).
+        var viewers: [FamilyMember] = []
 
         init(date: Date, note: String = "") {
             self.date = date

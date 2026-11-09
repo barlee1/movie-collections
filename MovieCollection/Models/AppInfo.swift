@@ -32,6 +32,9 @@ nonisolated enum AppInfo {
     /// TMDB's required attribution wording.
     static let tmdbCredit = "This product uses the TMDB API but is not endorsed or certified by TMDB."
     static let tmdbURL = URL(string: "https://www.themoviedb.org")
+    /// Required wherever TMDB's where-to-buy data is shown.
+    static let justWatchCredit = "Where-to-buy data from JustWatch."
+    static let justWatchURL = URL(string: "https://www.justwatch.com")
 
     /// e.g. "Version 1.0 (3)"
     static var versionText: String {

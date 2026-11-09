@@ -25,6 +25,7 @@ final class EditTitleViewModel {
     var location: StorageLocation?
     var loanedTo: String
     var loanedOn: Date
+    var dueBack: Date?
     var filmRating: FilmRating?
     var tags: [Tag]
     var hasReview: Bool
@@ -43,6 +44,7 @@ final class EditTitleViewModel {
         location = title.storageLocation ?? (title.format.isPhysical ? appModel.location(.shelf) : nil)
         loanedTo = title.loanedTo ?? ""
         loanedOn = title.loanedOn ?? .now
+        dueBack = title.loanDueOn
         filmRating = title.filmRating
         tags = title.sortedTags
         hasReview = title.review != nil || startWithReview
@@ -66,8 +68,11 @@ final class EditTitleViewModel {
             let borrower = isLoanedOut ? loanedTo : nil
             let changed =
                 location !== title.storageLocation
-                || (isLoanedOut && (borrower?.trimmed != title.loanedTo || loanedOn != title.loanedOn))
-            if changed, !appModel.move(title, to: location, loanedTo: borrower, on: loanedOn) { return false }
+                || (isLoanedOut
+                    && (borrower?.trimmed != title.loanedTo || loanedOn != title.loanedOn || dueBack != title.loanDueOn))
+            if changed, !appModel.move(title, to: location, loanedTo: borrower, on: loanedOn, dueBack: dueBack) {
+                return false
+            }
         }
 
         if tags.map(\.id) != title.sortedTags.map(\.id), !appModel.setTags(tags, on: title) { return false }

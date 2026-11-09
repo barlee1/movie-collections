@@ -13,10 +13,9 @@ import SwiftUI
 /// Screens that get pushed on top of a tab's root screen.
 enum Route: Hashable {
     /// A title's detail screen. `fromTonight` shows the "Tonight's pick"
-    /// tag and the "Pick another" button.
-    case titleDetail(PersistentIdentifier, fromTonight: Bool = false)
-    /// The flip-card viewer, stepping through `ids` in order, starting at `startID`.
-    case titleDeck(ids: [PersistentIdentifier], startID: PersistentIdentifier)
+    /// tag and the "Pick another" button. `fromShelf` zooms it in from the
+    /// tapped Shelf poster.
+    case titleDetail(PersistentIdentifier, fromTonight: Bool = false, fromShelf: Bool = false)
     /// The user's reviews opened from a detail screen's "See Review", scrolled to that title.
     case reviews(highlighting: PersistentIdentifier)
     /// The "Type it in" form, optionally pre-filled from a catalog movie (by TMDB ID).
@@ -34,6 +33,8 @@ enum Route: Hashable {
     case manageLocations
     /// Settings › Tags.
     case manageTags
+    /// Settings › Family: the people the user watches with.
+    case manageFamily
 }
 
 @Observable

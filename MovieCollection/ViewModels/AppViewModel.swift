@@ -31,6 +31,8 @@ final class AppViewModel {
     private(set) var tags: [Tag] = []
     /// Places a disc can be, in the user's order. Shelf and Loaned out are always here.
     private(set) var locations: [StorageLocation] = []
+    /// The people the user watches with, in the user's order. At most `FamilyMember.limit`.
+    private(set) var familyMembers: [FamilyMember] = []
     /// Set when saving fails; ContentView shows it in an alert.
     var errorMessage: String?
 
@@ -44,14 +46,35 @@ final class AppViewModel {
     /// need the network again.
     private(set) var fetchedMovies: [Int: Movie] = [:]
 
+    /// Where-to-buy results this session, by "movieID-region", so revisiting
+    /// a detail screen doesn't need the network again.
+    @ObservationIgnored private var purchaseOptionsCache: [String: PurchaseOptions] = [:]
+
     @ObservationIgnored private let catalogService: MovieCatalogService
     @ObservationIgnored private let remoteCatalog: (any RemoteMovieCatalog)?
     @ObservationIgnored private let settings: UserDefaults
+    /// Due-back notifications for loaned discs, kept in sync with the shelf.
+    @ObservationIgnored let loanReminders: any LoanReminderScheduling
     /// How the Shelf is ordered, remembered between launches.
     var shelfSortOrder: ShelfSortOrder {
         didSet { settings.set(shelfSortOrder.rawValue, forKey: Self.shelfSortKey) }
     }
     static let shelfSortKey = "shelfSortOrder"
+    /// Whether Tonight suggests film ratings from the youngest viewer's age.
+    var suggestsRatingsFromAges: Bool {
+        didSet { settings.set(suggestsRatingsFromAges, forKey: Self.ageSuggestionsKey) }
+    }
+    static let ageSuggestionsKey = "suggestsRatingsFromAges"
+    /// Whether the user's own profile is listed with their family members.
+    var includesYouInFamily: Bool {
+        didSet { settings.set(includesYouInFamily, forKey: Self.includesYouKey) }
+    }
+    static let includesYouKey = "includesYouInFamily"
+    /// Whether Streaming titles show the "Own it instead" card.
+    var showsOwnItSuggestions: Bool {
+        didSet { settings.set(showsOwnItSuggestions, forKey: Self.ownItKey) }
+    }
+    static let ownItKey = "showsOwnItSuggestions"
 
     /// Adds the sample shelf once the catalog loads. For previews and UI tests.
     @ObservationIgnored var loadsSampleShelfOnStart = false
@@ -68,13 +91,18 @@ final class AppViewModel {
         store: CollectionStore,
         catalogService: MovieCatalogService = MovieCatalogService(),
         remoteCatalog: (any RemoteMovieCatalog)? = nil,
-        settings: UserDefaults = .standard
+        settings: UserDefaults = .standard,
+        loanReminders: any LoanReminderScheduling = NoLoanReminders()
     ) {
+        self.loanReminders = loanReminders
         self.store = store
         self.catalogService = catalogService
         self.remoteCatalog = remoteCatalog
         self.settings = settings
         shelfSortOrder = settings.string(forKey: Self.shelfSortKey).flatMap(ShelfSortOrder.init(rawValue:)) ?? .aToZ
+        suggestsRatingsFromAges = settings.object(forKey: Self.ageSuggestionsKey) as? Bool ?? true
+        includesYouInFamily = settings.object(forKey: Self.includesYouKey) as? Bool ?? true
+        showsOwnItSuggestions = settings.object(forKey: Self.ownItKey) as? Bool ?? true
         if let data = settings.data(forKey: Self.profileKey) {
             profile = try? JSONDecoder().decode(UserProfile.self, from: data)
         }
@@ -168,7 +196,7 @@ final class AppViewModel {
 
     // MARK: - Deleting everything
 
-    /// Removes every title and review, signs out to a fresh guest, and resets
+    /// Removes every title, review, and family member, signs out to a fresh guest, and resets
     /// preferences, like a first launch. Returns false if the shelf couldn't be cleared.
     @discardableResult
     func deleteAllData() -> Bool {
@@ -178,6 +206,9 @@ final class AppViewModel {
         guard cleared else { return false }
         settings.removeObject(forKey: Self.legacySubscriptionsKey)
         shelfSortOrder = .aToZ
+        suggestsRatingsFromAges = true
+        includesYouInFamily = true
+        showsOwnItSuggestions = true
         saveProfile(.guest)
         return true
     }
@@ -209,8 +240,13 @@ final class AppViewModel {
 
     private func reloadShelf() throws {
         titles = try store.allTitles()
+        // Loans, returns, deleted titles, and deleting everything all land here.
+        let loans = LoanReminder.reminders(for: titles)
+        let reminders = loanReminders
+        Task { await reminders.sync(loans) }
         tags = try store.allTags()
         locations = try store.allLocations()
+        familyMembers = try store.allFamilyMembers()
     }
 
     // MARK: - Derived shelf values
@@ -278,6 +314,17 @@ final class AppViewModel {
         guard let remoteCatalog, let details = try? await remoteCatalog.movieDetails(id: movie.id) else { return movie }
         fetchedMovies[details.id] = details
         return details
+    }
+
+    /// Where a movie can be bought in the user's country, from TMDB. Nil for
+    /// titles without a TMDB ID, TV shows, or when TMDB can't be reached.
+    func purchaseOptions(for title: OwnedTitle, region: String = OwnItLinks.region) async -> PurchaseOptions? {
+        guard let remoteCatalog, title.kind == .movie, let movieID = title.catalogID else { return nil }
+        let key = "\(movieID)-\(region)"
+        if let cached = purchaseOptionsCache[key] { return cached }
+        guard let options = try? await remoteCatalog.purchaseOptions(movieID: movieID, region: region) else { return nil }
+        purchaseOptionsCache[key] = options
+        return options
     }
 
     /// Finds one movie by title (and year, if known) on TMDB, with full details.

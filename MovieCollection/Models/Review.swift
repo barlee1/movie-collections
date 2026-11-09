@@ -4,13 +4,13 @@
 //
 //  Purpose: The user's own review of a title: a half-star rating, text, and date.
 //  Used in: OwnedTitle, CollectionStore, Reviews tab, edit sheet.
-//  Part of SchemaV2 (see SchemaVersions.swift); the app uses the Review typealias.
+//  Part of SchemaV4 (see SchemaVersions.swift); the app uses the Review typealias.
 //
 
 import Foundation
 import SwiftData
 
-extension SchemaV2 {
+extension SchemaV4 {
     @Model
     final class Review {
         /// Stars from 0.5 to 5 in half-star steps.

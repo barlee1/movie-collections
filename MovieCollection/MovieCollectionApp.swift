@@ -39,7 +39,9 @@ struct MovieCollectionApp: App {
             store: CollectionStore(container: container),
             // UI tests stay offline so their search results never change.
             remoteCatalog: isUITesting ? nil : TMDBClient.fromBundle(),
-            settings: settings
+            settings: settings,
+            // UI tests never schedule real notifications.
+            loanReminders: isUITesting ? NoLoanReminders() : SystemLoanReminders()
         )
         if startsWithSampleShelf {
             appModel.setProfile(.sample)

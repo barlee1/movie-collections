@@ -27,10 +27,16 @@ struct PosterArt: View {
             ZStack {
                 palette.base
                 // A soft circle in the corner, the design system's "blob" decoration.
-                Circle()
-                    .fill(palette.blob)
-                    .frame(width: size.width * 1.1, height: size.width * 1.1)
-                    .position(x: size.width * 0.9, y: size.height * 0.12)
+                // Drawn in a Canvas so the overhang doesn't stretch the poster's
+                // accessibility frame past its edges (a positioned Circle view did).
+                Canvas { context, canvasSize in
+                    let diameter = canvasSize.width * 1.1
+                    let center = CGPoint(x: canvasSize.width * 0.9, y: canvasSize.height * 0.12)
+                    let circle = CGRect(
+                        x: center.x - diameter / 2, y: center.y - diameter / 2,
+                        width: diameter, height: diameter)
+                    context.fill(Path(ellipseIn: circle), with: .color(palette.blob))
+                }
                 Text(letter)
                     // Artwork, so the letter scales with the tile, not Dynamic Type.
                     .font(.custom("Caprasimo-Regular", fixedSize: size.width * 0.55))
@@ -64,7 +70,7 @@ struct ShelfPosterCard: View {
     let meta: String
     let format: MediaFormat
     let isReviewed: Bool
-    /// Width ÷ height. The shelf grid uses 3:4; the flip-card viewer uses a taller 2:3.
+    /// Width ÷ height. The shelf grid uses 3:4.
     var aspectRatio: CGFloat = 3 / 4
     var titleSize: CGFloat = 20
 

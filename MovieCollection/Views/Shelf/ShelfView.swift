@@ -153,13 +153,8 @@ private struct ShelfContent: View {
         LazyVGrid(columns: columns, spacing: 14) {
             ForEach(titles) { title in
                 Button {
-                    // Open the flip-card viewer at this title. Next/previous
-                    // follow the shelf as it's currently searched, filtered, and sorted.
-                    router.push(
-                        .titleDeck(
-                            ids: titles.map(\.persistentModelID),
-                            startID: title.persistentModelID
-                        ))
+                    // Straight to the title's details, zooming in from the poster.
+                    router.push(.titleDetail(title.persistentModelID, fromShelf: true))
                 } label: {
                     ShelfPosterCard(
                         title: title.title,

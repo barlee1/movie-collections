@@ -11,7 +11,7 @@ Built with SwiftUI and SwiftData, following MVVM. Everything is stored on the de
 - Standard iOS search across title, director, cast, genre, year, and tags, with suggestion tokens and All / Not reviewed / Reviewed scopes.
 - Filters for format, service, film rating, location, and tags.
 - Sorting: A to Z, last watched, recently added, or your rating.
-- A flip-card viewer: tap a poster, then flip the card for details and swipe between titles.
+- Tap a poster to zoom straight into the title's details.
 
 **Adding titles**
 - **Scan a cover:** point the camera at a case, or pick a photo. The text is read on the device with Vision and matched to the catalog.
@@ -63,8 +63,8 @@ MovieCollection/
   Models/         SwiftData models (versioned schema) and value types
   Services/       Store, catalog and TMDB client, importers and exporter, CSV parsing
   ViewModels/     @Observable view models, one per screen, plus the app-wide AppViewModel
-  Views/          SwiftUI screens by area (Shelf, Tonight, Add, Detail, Deck, Profile, SignIn)
-    Components/   Shared building blocks: posters, tags, chips, star picker, flip card
+  Views/          SwiftUI screens by area (Shelf, Tonight, Add, Detail, Profile, SignIn)
+    Components/   Shared building blocks: posters, tags, chips, star picker, family avatars
   Navigation/     Tab shell and per-tab navigation router
   Theme/          Colors (five brand colors plus derived tokens) and fonts
   Resources/      Fonts, sample CSVs, and (optionally) Secrets.plist

@@ -3,7 +3,9 @@
 //  MovieCollection
 //
 //  Purpose: Display values and quick actions for one title's detail screen:
-//  watched and reviewed check-offs, watch history, tags, and where a disc is.
+//  watched and reviewed check-offs, watch history, tags, where a disc is,
+//  who in the family has seen it (with their own ratings), and for streaming
+//  titles, ways to own it instead.
 //  Used in: TitleDetailView.
 //
 
@@ -86,13 +88,14 @@ final class TitleDetailViewModel {
         isShowingWatchSheet = true
     }
 
-    /// Saves the watch sheet: a new watch, or changes to the one being edited.
-    func saveWatch(date: Date, note: String) {
+    /// Saves the watch sheet: a new watch, or changes to the one being edited,
+    /// with the family members who were there.
+    func saveWatch(date: Date, note: String, viewers: [FamilyMember]) {
         guard let title else { return }
         if let editingWatch {
-            appModel.updateWatch(editingWatch, date: date, note: note)
+            appModel.updateWatch(editingWatch, date: date, note: note, viewers: viewers)
         } else {
-            appModel.logWatch(of: title, on: date, note: note)
+            appModel.logWatch(of: title, on: date, note: note, viewers: viewers)
         }
     }
 
@@ -113,6 +116,110 @@ final class TitleDetailViewModel {
         return newestFirst.enumerated().map { offset, watch in
             WatchRow(watch: watch, label: "\(WatchHistoryText.ordinal(newestFirst.count - offset)) watch")
         }
+    }
+
+    /// "with Sam and Riley", or nil if no family member was marked as there.
+    static func viewersText(for watch: WatchEvent) -> String? {
+        let names = watch.viewers.sorted { $0.sortOrder < $1.sortOrder }.map(\.name)
+        guard !names.isEmpty else { return nil }
+        return "with " + names.formatted(.list(type: .and))
+    }
+
+    // MARK: - Family
+
+    /// One family member's row: seen or not, their last watch, and their stars.
+    struct FamilyRow: Identifiable {
+        let member: FamilyMember
+        let hasSeen: Bool
+        let detail: String
+        let rating: Double?
+        var id: UUID { member.id }
+    }
+
+    var familyRows: [FamilyRow] {
+        guard let title else { return [] }
+        return appModel.familyMembers.map { member in
+            FamilyRow(
+                member: member,
+                hasSeen: title.hasBeenSeen(by: member),
+                detail: Self.familyDetail(for: member, title: title),
+                rating: title.familyRating(for: member)
+            )
+        }
+    }
+
+    /// "Last watched Oct 21, 2026 · 2 times", "Seen", or "Not seen yet".
+    static func familyDetail(for member: FamilyMember, title: OwnedTitle) -> String {
+        guard title.hasBeenSeen(by: member) else { return "Not seen yet" }
+        guard let date = title.lastWatched(by: member) else { return "Seen" }
+        let count = title.watches(seenBy: member).count
+        return count > 1 ? "Last watched \(date.displayText) · \(count) times" : "Last watched \(date.displayText)"
+    }
+
+    /// "Not seen by: Sam, Riley", "Everyone has seen it", or nil with no family.
+    var familySummary: String? {
+        guard let title, appModel.hasFamily else { return nil }
+        let notSeen = appModel.names(notSeen: title)
+        return notSeen.isEmpty ? "Everyone has seen it" : "Not seen by: \(notSeen.joined(separator: ", "))"
+    }
+
+    /// Set before unchecking someone who was at logged watches or rated it.
+    var confirmingUnseen: FamilyMember?
+
+    /// Checking marks them seen. Unchecking clears their rating and takes them
+    /// off this title's watches, asking first if that loses anything.
+    func setSeen(_ seen: Bool, by member: FamilyMember) {
+        guard let title, seen != title.hasBeenSeen(by: member) else { return }
+        if !seen, !title.watches(seenBy: member).isEmpty || title.familyRating(for: member) != nil {
+            confirmingUnseen = member
+        } else {
+            appModel.setSeen(seen, by: member, title: title)
+        }
+    }
+
+    func confirmUnseen() {
+        guard let title, let member = confirmingUnseen else { return }
+        appModel.setSeen(false, by: member, title: title)
+        confirmingUnseen = nil
+    }
+
+    /// e.g. "Sam's rating and 2 watches will be cleared."
+    var unseenMessage: String {
+        guard let title, let member = confirmingUnseen else { return "" }
+        let watches = title.watches(seenBy: member).count
+        var parts: [String] = []
+        if title.familyRating(for: member) != nil { parts.append("their rating is cleared") }
+        if watches > 0 { parts.append("they come off \(watches) logged \(watches == 1 ? "watch" : "watches")") }
+        let sentence = parts.joined(separator: ", and ")
+        return sentence.prefix(1).uppercased() + sentence.dropFirst() + "."
+    }
+
+    func setFamilyRating(_ rating: Double?, by member: FamilyMember) {
+        guard let title, rating != title.familyRating(for: member) else { return }
+        appModel.setFamilyRating(rating, by: member, title: title)
+    }
+
+    // MARK: - Own it instead
+
+    enum OwnItState: Equatable {
+        case loading
+        /// Where-to-buy data from TMDB.
+        case known(PurchaseOptions)
+        /// No data (no TMDB key, offline, a TV show, or a hand-entered title): search links only.
+        case unknown
+    }
+
+    private(set) var ownItState: OwnItState = .loading
+
+    /// Streaming titles get the card, unless it's turned off in Settings.
+    var showsOwnItInstead: Bool {
+        title?.format == .streaming && appModel.showsOwnItSuggestions
+    }
+
+    func loadOwnItInstead() async {
+        guard let title, showsOwnItInstead else { return }
+        ownItState = .loading
+        ownItState = await appModel.purchaseOptions(for: title).map(OwnItState.known) ?? .unknown
     }
 
     // MARK: - Tags and location
@@ -181,7 +288,17 @@ final class TitleDetailViewModel {
         return [InfoRow(label: "Title", value: title.title)] + Self.detailRows(for: title)
     }
 
-    /// Rating, director, year, and cast. Shared with the back of the flip cards.
+    /// e.g. "Romance, Drama · 1h 39m", or nil with neither.
+    var genreAndRuntime: String? {
+        guard let title else { return nil }
+        let parts = [
+            title.genres.isEmpty ? nil : title.genres.prefix(3).joined(separator: ", "),
+            title.runtime.map(TitleDisplay.runtimeText(minutes:)),
+        ].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
+    /// Rating, director, year, and cast.
     static func detailRows(for title: OwnedTitle) -> [InfoRow] {
         [
             InfoRow(label: "Rating", value: title.filmRating?.label ?? "Not set"),
@@ -205,6 +322,13 @@ final class TitleDetailViewModel {
         guard location.role == .loanedOut else { return location.name }
         let who = title.loanedTo.map { "Loaned to \($0)" } ?? location.name
         return title.loanedOn.map { "\(who) since \($0.displayText)" } ?? who
+    }
+
+    /// "Due back Nov 23, 2026" or "Overdue since Nov 23, 2026" for a loan with
+    /// a date. Its own tag, since it doesn't fit on one line with the loan text.
+    static func dueText(for title: OwnedTitle) -> String? {
+        guard title.isLoanedOut, let due = title.loanDueOn else { return nil }
+        return "\(title.isLoanOverdue ? "Overdue since" : "Due back") \(due.displayText)"
     }
 
     var watchedLabel: String {

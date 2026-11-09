@@ -2,7 +2,9 @@
 //  TonightViewModel.swift
 //  MovieCollection
 //
-//  Purpose: Tonight's mood filters and the random "Pick one for me".
+//  Purpose: Tonight's mood filters, "Who's watching?" (family members on
+//  the couch, with a film rating suggestion from the youngest one's age),
+//  and the random "Pick one for me".
 //  Shared with the detail screen so "Pick another" uses the same filters.
 //  Used in: TonightView, TitleDetailView.
 //
@@ -32,6 +34,7 @@ final class TonightViewModel {
         }
     }
 
+    /// The "Seen it?" choices. Rewatch means watched at least once (any logged watch).
     enum SeenOption: String, CaseIterable, Identifiable {
         case notReviewed = "Not reviewed yet"
         case anything = "Anything"
@@ -60,6 +63,29 @@ final class TonightViewModel {
             }
         }
     }
+
+    /// How unseen a title has to be for the family members watching.
+    enum ViewerMode: String, CaseIterable, Identifiable {
+        case noneSeen = "None of them have seen it"
+        case mostHaventSeen = "Most haven't seen it"
+
+        var id: String { rawValue }
+    }
+
+    /// Family members on the couch tonight (by `FamilyMember.id`).
+    var viewerIDs: Set<UUID> = [] {
+        // A new group gets a fresh age suggestion.
+        didSet { usesAgeSuggestion = true }
+    }
+    /// Whether the user is on the couch too. Only counts while their profile
+    /// is listed with the family (see `AppViewModel.familyYou`).
+    var includesYou = false {
+        didSet { usesAgeSuggestion = true }
+    }
+    var viewerMode: ViewerMode = .noneSeen
+    /// Whether to follow the suggested film ratings for the youngest viewer.
+    /// Tapping the suggestion chip turns it off for this group.
+    var usesAgeSuggestion = true
 
     var moods: Set<Mood> = []
     var genres: Set<String> = []
@@ -104,6 +130,59 @@ final class TonightViewModel {
         return FilmRating.allCases.filter(used.contains)
     }
 
+    // MARK: - Who's watching
+
+    /// The family members picked, in the user's order. Deleted members drop out.
+    var viewers: [FamilyMember] {
+        appModel.familyMembers.filter { viewerIDs.contains($0.id) }
+    }
+
+    /// Whether the user is picked and still listed with the family.
+    var isYouWatching: Bool { includesYou && appModel.familyYou != nil }
+
+    /// How many people are picked, counting the user.
+    var viewerCount: Int { viewers.count + (isYouWatching ? 1 : 0) }
+
+    /// The youngest viewer with an age, if any.
+    var youngestViewer: FamilyMember? {
+        viewers.filter { $0.age != nil }.min { ($0.age ?? 0) < ($1.age ?? 0) }
+    }
+
+    /// The suggested film ratings for the youngest viewer, if ages are
+    /// used and someone is under 17.
+    var ageSuggestion: (member: FamilyMember, summary: String, ratings: Set<FilmRating>)? {
+        guard appModel.suggestsRatingsFromAges,
+            let member = youngestViewer, let age = member.age,
+            let summary = FamilyAgeGuide.summary(forAge: age),
+            let ratings = FamilyAgeGuide.allowedRatings(forAge: age)
+        else { return nil }
+        return (member, summary, ratings)
+    }
+
+    /// e.g. "G and PG for Sam (8)"
+    var ageSuggestionLabel: String? {
+        guard let suggestion = ageSuggestion, let age = suggestion.member.age else { return nil }
+        return "\(suggestion.summary) for \(suggestion.member.name) (\(age))"
+    }
+
+    private func fitsViewers(_ title: OwnedTitle) -> Bool {
+        let watching = viewers
+        let count = viewerCount
+        guard count > 0 else { return true }
+        // The user has seen it if they've logged a watch of it.
+        let unseen = watching.filter { !title.hasBeenSeen(by: $0) }.count + (isYouWatching && !title.isWatched ? 1 : 0)
+        switch viewerMode {
+        case .noneSeen: if unseen < count { return false }
+        // At least half, so with two watching, one new to it is enough.
+        case .mostHaventSeen: if unseen * 2 < count { return false }
+        }
+        // Titles without a film rating are left out, since their fit is unknown.
+        if usesAgeSuggestion, let suggestion = ageSuggestion {
+            guard let rating = title.filmRating, suggestion.ratings.contains(rating) else { return false }
+        }
+        return true
+    }
+
     // MARK: - Matching
 
     var matches: [OwnedTitle] {
@@ -111,6 +190,7 @@ final class TonightViewModel {
     }
 
     private func fits(_ title: OwnedTitle) -> Bool {
+        if !fitsViewers(title) { return false }
         if !moods.isEmpty, moods.isDisjoint(with: title.moods) { return false }
         if !genres.isEmpty, genres.isDisjoint(with: title.genres) { return false }
         // Titles without a known runtime aren't ruled out.
@@ -118,7 +198,7 @@ final class TonightViewModel {
         if let format, title.format != format { return false }
         switch seen {
         case .notReviewed: if title.isReviewed { return false }
-        case .rewatch: if !title.isReviewed { return false }
+        case .rewatch: if !title.isWatched { return false }
         case .anything: break
         }
         if !ratings.isEmpty {
@@ -138,28 +218,19 @@ final class TonightViewModel {
 
     private enum ChangedFilter { case seen, yourRating }
 
-    /// A star level needs a review, and "Not rated" rules one out, so a choice
-    /// that contradicts "Reviewed it?" moves the other filter to a choice that fits.
+    /// A star level needs a review, so it can't go with "Not reviewed yet"; a
+    /// choice that contradicts the other moves it to one that fits. Rewatch
+    /// (watched before) works with any rating, including "Not rated".
     private func resolveConflict(changed: ChangedFilter) {
         adjustmentNote = nil
-        let needsReview = yourRating.minimum != nil
+        guard seen == .notReviewed, yourRating.minimum != nil else { return }
         switch changed {
         case .yourRating:
-            if needsReview, seen == .notReviewed {
-                seen = .anything
-                adjustmentNote = "Showing reviewed titles too, since star ratings come from your reviews."
-            } else if yourRating == .notRated, seen == .rewatch {
-                seen = .anything
-                adjustmentNote = "\"Reviewed it?\" changed to Anything, since rewatches are already rated."
-            }
+            seen = .anything
+            adjustmentNote = "Showing reviewed titles too, since star ratings come from your reviews."
         case .seen:
-            if seen == .notReviewed, needsReview {
-                yourRating = .any
-                adjustmentNote = "Your rating changed to Any, since unreviewed titles have no stars yet."
-            } else if seen == .rewatch, yourRating == .notRated {
-                yourRating = .any
-                adjustmentNote = "Your rating changed to Any, since rewatches are already rated."
-            }
+            yourRating = .any
+            adjustmentNote = "Your rating changed to Any, since unreviewed titles have no stars yet."
         }
     }
 

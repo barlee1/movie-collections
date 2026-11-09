@@ -7,13 +7,13 @@
 //  and hand-entered titles work the same way as catalog ones. Holds the
 //  title's watch history, where a disc physically is, and its tags.
 //  Used in: CollectionStore, shelf, detail, edit sheet, Tonight, profile.
-//  Part of SchemaV2 (see SchemaVersions.swift); the app uses the OwnedTitle typealias.
+//  Part of SchemaV4 (see SchemaVersions.swift); the app uses the OwnedTitle typealias.
 //
 
 import Foundation
 import SwiftData
 
-extension SchemaV2 {
+extension SchemaV4 {
     @Model
     final class OwnedTitle {
         /// The catalog Movie this came from, or nil if entered by hand.
@@ -57,8 +57,15 @@ extension SchemaV2 {
         var loanedOn: Date?
         /// Where it goes back to when it's returned.
         var locationBeforeLoanID: UUID?
+        /// When the borrower said they'd bring it back, if a date was set.
+        /// A notification reminds the user that morning (see LoanReminders).
+        var loanDueOn: Date?
 
         var tags: [Tag] = []
+
+        /// Family members' ratings and "seen" marks. Deleting the title deletes these.
+        @Relationship(deleteRule: .cascade, inverse: \FamilyRating.ownedTitle)
+        var familyRatings: [FamilyRating] = []
 
         init(
             catalogID: Int? = nil,
@@ -145,6 +152,12 @@ extension SchemaV2 {
         // MARK: Location
 
         var isLoanedOut: Bool { storageLocation?.role == .loanedOut }
+
+        /// Loaned out and past its due-back day.
+        var isLoanOverdue: Bool {
+            guard isLoanedOut, let loanDueOn else { return false }
+            return Calendar.current.startOfDay(for: loanDueOn) < Calendar.current.startOfDay(for: .now)
+        }
 
         // MARK: Tags
 

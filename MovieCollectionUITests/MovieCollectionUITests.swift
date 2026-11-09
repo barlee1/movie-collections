@@ -158,35 +158,6 @@ final class MovieCollectionUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["31 titles · 28 not reviewed yet"].waitForExistence(timeout: 3))
     }
 
-    // MARK: - Flip cards
-
-    @MainActor
-    func testFlipCardAndStepThroughDeck() throws {
-        let app = launchApp()
-
-        // Tapping a shelf poster opens the flip-card viewer.
-        app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Apollo 13'")).firstMatch.tap()
-        XCTAssertTrue(app.staticTexts["1 of 30"].waitForExistence(timeout: 3))
-        XCTAssertFalse(app.buttons["Previous title"].isEnabled, "Can't go back from the first card")
-
-        // Tapping the card flips it to its details.
-        app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label BEGINSWITH 'Apollo 13,'"))
-            .firstMatch
-            .tap()
-        XCTAssertTrue(app.staticTexts["Director: Ron Howard"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Tap the card to see the poster"].exists)
-
-        // Next moves to the second card, on its poster side.
-        app.buttons["Next title"].tap()
-        XCTAssertTrue(app.staticTexts["2 of 30"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.staticTexts["Tap the card to flip it"].exists)
-        XCTAssertTrue(app.buttons["Previous title"].isEnabled)
-
-        app.buttons["Previous title"].tap()
-        XCTAssertTrue(app.staticTexts["1 of 30"].waitForExistence(timeout: 3))
-    }
-
     // MARK: - Add tab features
 
     @MainActor

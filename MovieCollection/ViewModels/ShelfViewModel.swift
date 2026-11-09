@@ -84,9 +84,16 @@ final class ShelfViewModel {
         var locationIDs: Set<UUID> = []
         /// Titles with any of these tags (by `Tag.id`).
         var tagIDs: Set<UUID> = []
+        /// Titles none of these family members have seen (by `FamilyMember.id`).
+        var notSeenByIDs: Set<UUID> = []
+        /// Titles the user hasn't watched, picked from "Not seen by" with their profile name.
+        var notSeenByYou = false
 
         /// How many filters are on, shown as the badge on the Filter button.
-        var activeCount: Int { formats.count + services.count + ratings.count + locationIDs.count + tagIDs.count }
+        var activeCount: Int {
+            formats.count + services.count + ratings.count + locationIDs.count + tagIDs.count + notSeenByIDs.count
+                + (notSeenByYou ? 1 : 0)
+        }
     }
 
     var seen: SeenFilter = .all
@@ -112,8 +119,7 @@ final class ShelfViewModel {
 
     // MARK: - Results
 
-    /// The shelf as searched, filtered, and sorted. The flip-card viewer
-    /// steps through titles in this same order.
+    /// The shelf as searched, filtered, and sorted.
     var visibleTitles: [OwnedTitle] {
         Self.sorted(appModel.titles.filter(matches), by: sortOrder)
     }
@@ -140,6 +146,11 @@ final class ShelfViewModel {
             guard let location = title.storageLocation, filters.locationIDs.contains(location.id) else { return false }
         }
         if !filters.tagIDs.isEmpty, !title.tags.contains(where: { filters.tagIDs.contains($0.id) }) { return false }
+        if filters.notSeenByYou, appModel.familyYou != nil, title.isWatched { return false }
+        if !filters.notSeenByIDs.isEmpty {
+            let picked = appModel.familyMembers.filter { filters.notSeenByIDs.contains($0.id) }
+            if picked.contains(where: { title.hasBeenSeen(by: $0) }) { return false }
+        }
         if !tokens.allSatisfy({ Self.title(title, matches: $0) }) { return false }
         return Self.title(title, containsText: query)
     }
