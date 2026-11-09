@@ -25,6 +25,8 @@ Effort is a rough guess: **S** is a day or less, **M** is a few days, **L** is a
    - [Family members](#12-family-members)
    - [Following friends](#13-following-friends)
    - [Public or friends-only account](#14-public-or-friends-only-account)
+   - [Remove the flip-card carousel](#15-remove-the-flip-card-carousel)
+   - [Small fixes: Rewatch and loan return dates](#16-small-fixes-rewatch-and-loan-return-dates)
 4. [Open questions](#open-questions)
 5. [Ideas parking lot](#ideas-parking-lot)
 
@@ -42,6 +44,10 @@ The goal is to get a beta into testers' hands quickly, then ship improvements as
 | **3. Family** | Family members, who has seen what, family ratings | Builds on watch history from milestone 2. |
 | **4. Own it instead** | Subscription suggestions, buy links | Needs real "where to buy" data, which comes with the catalog upgrade. |
 | **5. Social** | Accounts, following friends, public or friends-only | Needs a server, sign-in, and extra App Store rules. Biggest piece. |
+| **6. Straight to details** (built) | Remove the flip-card carousel: tapping a movie anywhere opens its detail screen | Doesn't depend on anything else and is small. |
+| **7. Small fixes** (built) | Tonight's "Rewatch" means "watched before"; loan return dates with a reminder | Answers to open questions 2 and 3. Small and on-device only. |
+
+**Order from here (decided November 9, 2026):** Milestone 6, then 7, then 5. Social waits for the Apple Developer Program membership, since CloudKit and Sign in with Apple can't be tried on a device without it.
 
 ### Milestone 1 status (October 27, 2026): built
 
@@ -49,7 +55,7 @@ The goal is to get a beta into testers' hands quickly, then ship improvements as
 |---|---|
 | Cloud icon | Digital shows `icloud` (filled on poster badges), Streaming shows `tv`, DVD keeps the disc. |
 | Trailer link | **Watch trailer** on the detail screen and the flip-card back opens a YouTube search for "<title> <year> official trailer". Exact trailers wait for the TMDB key. |
-| Shelf sorting | Sort menu: A to Z (default, ignoring The/A/An), Last watched (never watched first, then oldest), Recently added, Your rating. Remembered between launches; the flip-card viewer follows it. |
+| Shelf sorting | Sort menu: A to Z (default, ignoring The/A/An), Last watched (never watched first, then oldest), Recently added, Your rating. Remembered between launches. |
 | Tonight star filter | **Your rating**: Any, 3★ and up, 4★ and up, 4.5★ and up, Not rated. If it contradicts "Reviewed it?", the other filter adjusts and a note explains why. The old "Rating" row is now labeled "Film rating". |
 | Standard search | Native iOS search on Shelf with a large "Your shelf" title. One box searches title, director, cast, genre, and year; suggestions become tokens; All / Not reviewed / Reviewed are scopes while searching. A Search button opens it (or pull the shelf down). Format, service, and film rating moved to a Filter sheet. |
 | Settings | A gear on Profile opens Settings: Account, Streaming services, Data (import, **export shelf as CSV**, load or remove sample movies, delete all data), and About. |
@@ -68,6 +74,57 @@ The goal is to get a beta into testers' hands quickly, then ship improvements as
 | Import and export | The CSV export adds Where, Times Watched, and Tags columns. The spreadsheet import reads Where and Tags back, making new locations and tags as needed. |
 
 **Still open:** whether Tonight's "Rewatch" should mean "watched before" instead of "reviewed" (unchanged for now). **Tests are out of date** where they set `lastWatched` directly, call `updateLocation`, or check the Letterboxd watch date; catch these up when tests resume.
+
+### Milestone 3 status (November 9, 2026): built
+
+| Feature | What was built |
+|---|---|
+| Data version 3 | `SchemaV3` adds `FamilyMember` and `FamilyRating`, plus `WatchEvent.viewers` (who was there) and `OwnedTitle.familyRatings`. Version 2 is frozen in `Models/SchemaV2.swift`; the upgrade is lightweight, since it only adds tables and empty relationships. |
+| Settings › Family | Add up to 15 members with a name, an optional age, and an avatar color. Tap to edit, drag to reorder, swipe (or **Remove** in the edit sheet) to delete. Removing someone asks first and says how many ratings and watches it affects; your own watches stay. Each row shows how many titles they've seen. |
+| Detail screen | A **Family** section (shown once you've added someone) with "Not seen by: Sam, Riley" or "Everyone has seen it", and one row per member: a seen check, "Last watched … · 2 times" or "Seen", and their own half-star rating. Rating something marks it seen. Unchecking someone who rated it or was at logged watches asks first. Long-press their stars to clear a rating. |
+| Who was there | The watch sheet (**Log another watch** or tapping a watch) has **Who was there?** chips. Watch history rows say "with Sam and Riley". The one-tap Watched check doesn't tick anyone. |
+| Shelf filter | **Not seen by** in the filter sheet. Picking several shows titles none of them have seen. |
+| Tonight | **Who's watching?** at the top. With two or more picked: "None of them have seen it" or "Most haven't seen it" (at least half). If the youngest has an age under 17, a chip like "G and PG for Sam (8)" limits picks to fitting ratings (under 13: G, PG, TV-Y, TV-G, TV-PG; 13 to 16: also PG-13 and TV-14). Titles without a film rating are left out while it's on. Tap the chip to turn it off for that group, or turn the suggestion off entirely in Settings › Family. |
+| You in the family | Once you're signed in and have added family, your profile name and photo appear first in Tonight's **Who's watching?** and the Shelf's **Not seen by**, and in the detail screen's "Not seen by" summary. What you've seen is your own Watched check (any logged watch). Turn it off with the switch at the top of Settings › Family. You're not in "Who was there?", since every logged watch is already yours, and you don't count toward the 15. |
+| Privacy | Family data stays on the phone and isn't in the CSV export. `docs/privacy.md` now lists it. Delete all data removes family members too. |
+
+**Decided along the way:** open question 5 (family ages) is answered as "suggest ratings, with an off switch". Ages are stored as typed and don't increase on their own, so they need editing as kids get older. **Tests weren't added or run.** No existing test uses the changed APIs, but family features have no tests yet.
+
+### Milestone 4 status (November 9, 2026): built
+
+| Feature | What was built |
+|---|---|
+| "Own it instead" card | On a **Streaming** title's detail screen, below Family: "Keep it even if you leave Netflix", a **Search eBay for a disc** button (eBay search for "<title> <year> DVD Blu-ray"), and **Buy digitally** links to the stores that sell it. **Bought it? Change it to DVD or Digital** opens Edit. |
+| Where-to-buy data | TMDB's watch providers (JustWatch data) for the phone's country, falling back to the US. Streaming-only titles show **"No way to own this yet"**, plus a note that eBay may still have a disc. Checked live: Inception lists Amazon, Apple TV, Google Play, YouTube, and Fandango at Home; Glass Onion lists none. Results are remembered for the session. |
+| Store links | TMDB doesn't give per-store links, so in the US each store opens its own search for the movie (Apple TV, Amazon, Google Play, YouTube, Fandango at Home). Other stores and other countries open TMDB's where-to-watch page. |
+| Without data | TV shows, hand-entered titles, no TMDB key, or offline: the card still shows eBay, plus Apple TV and Amazon searches. |
+| Settings | New **Suggestions** section with an **Own it instead** switch (on by default). The JustWatch credit is on the card and in About. `docs/privacy.md` says what's sent to TMDB for this. |
+
+**Not built (later extras):** affiliate links and the "Subscription check-up" screen. **Open question 11** is answered for now as "the phone's country, US fallback", but store search links are US sites only. **Tests weren't added or run.** `RemoteMovieCatalog` gained `purchaseOptions(movieID:region:)` with a default, so existing test fakes still compile.
+
+### Milestone 6 status (November 9, 2026): built
+
+| Change | What was done |
+|---|---|
+| Straight to details | Tapping a Shelf poster (with any search, review chip, filter, or sort) opens the title's detail screen, zooming in from the poster. Back returns to the Shelf as it was. There's no next or previous anywhere. |
+| Removed | `TitleDeckView`, `TitleDeckViewModel`, `FlipCard`, `Route.titleDeck`, `DeckTests.swift`, and the `testFlipCardAndStepThroughDeck` UI test. |
+| Kept from the card back | Genres and runtime ("Romance, Drama · 1h 39m") were only on the card back, so they now show under the poster on the detail screen. Everything else was already there. |
+| Other screens | Tonight and Reviews already opened the detail screen; they don't zoom, since only Shelf posters are zoom sources. |
+
+**Tests:** the runtime text check ("1h 39m") lived in `DeckTests.swift` and went with it; add it back with the other tests later, along with a UI test that a poster tap opens the detail screen. The app and test targets build.
+
+### Milestone 7 status (November 9, 2026): built
+
+| Change | What was built |
+|---|---|
+| Rewatch on Tonight | The group is now **Seen it?**: Not reviewed yet, Anything, Rewatch. Rewatch means at least one logged watch. Rewatch with "Not rated" now works together (watched but not reviewed); only "Not reviewed yet" with a star level still adjusts the other filter. On the sample shelf, Rewatch shows 11 titles instead of 2. |
+| Loan return dates | Loaning a disc (Move, Edit, or the add form) has a **Due back** switch. Turning it on picks a date two weeks out, which you can change; past dates aren't allowed. The detail screen shows a separate "Due back Nov 23, 2026" tag, or "Overdue since …" once it's late. Settings lists the due date with each loaned disc. Mark returned clears it. |
+| Reminders | A notification at 9 AM on the due day: "Ask Sam for Inception back". Permission is asked the first time a due date is set, not at launch. Reminders are rebuilt after every shelf change, so returns, new dates, deleted titles, and Delete all data stay correct. UI tests and previews never schedule real ones. |
+| Data version 4 | `SchemaV4` adds `OwnedTitle.loanDueOn`. Version 3 is frozen in `Models/SchemaV3.swift`; the upgrade is lightweight. |
+| VoiceOver fix | Shelf posters' accessibility frames were about 252 pt wide (overlapping their neighbors) because the poster art's corner circle hung past the edge. It's now drawn in a Canvas, so each frame matches its poster (174 pt on iPhone 17). |
+| Layout fix | The Move sheet no longer shrinks to a narrow column when Shelf is picked. |
+
+**Checked on the simulator:** poster frames, loaning with a due date and marking it returned, and the Tonight changes. The reminder itself wasn't tried, since the test mode used turns notifications off. **Tests are out of date:** `TonightTests.defaultsToNotReviewed` expects Rewatch to return the 2 reviewed titles. **Small leftovers:** the "Due back on" picker shows "11/23/26" while "Since" shows "Nov 9, 2026", and the Locations hint under the picker wraps narrower than the column.
 
 Milestones 0 and 1 together are the fastest path to a useful beta. Social features can wait for a later beta, and they bring the most App Store review requirements.
 
@@ -339,7 +396,6 @@ The DVD disc icon is fine, since it already reads as a thing you own.
 - A **Sort** button next to the search field opens a menu with a checkmark on the current choice.
 - The choice is remembered between launches.
 - The current sort shows subtly, for example "Sorted by last watched".
-- The flip-card viewer follows the same order.
 
 **Code changes**
 - Add a `ShelfViewModel.sortOrder` enum, saved with `@AppStorage`.
@@ -442,6 +498,15 @@ Simple on and off choices are saved with `@AppStorage`. Lists like locations, ta
 
 ### 13. Following friends
 
+> **Decided November 9, 2026** (these replace the options below where they differ):
+> - **Server:** CloudKit. **Sign-in:** Sign in with Apple only.
+> - **Friends are mutual,** like Facebook: you send a request, and accepting it makes you friends both ways. There's no one-way following.
+> - **Shared with friends:** reviews and ratings, your shelf, and watch activity ("Watched Inception · Oct 21"). Each one has its own switch in Settings › Account, all on by default. No "currently watching" status. Family data is never shared.
+> - **Finding people:** search by @handle (Public accounts only) and invite links shared by text or AirDrop. No contacts matching.
+> - **Reports and blocking:** reports go to the feedback email for review; you can remove posts or accounts. Block is in the app. The feedback email isn't set yet: you're making a dedicated address (not a personal inbox), then it goes in `AppInfo.feedbackEmail`.
+> - **Moving over:** Sign in with Apple turns today's on-phone profile into the account, keeping the name and photo. The sample friends go away.
+> - **Blocked on:** the Apple Developer Program membership (not enrolled yet).
+
 **Goal.** Follow real friends and see what they're watching and reviewing. This replaces today's sample Friends screen.
 
 **What it needs.** This is the first feature that needs a **server and accounts**. Everything before it works on the device alone.
@@ -490,9 +555,46 @@ Simple on and off choices are saved with `@AppStorage`. Lists like locations, ta
 - **Switching from Public to Friends only** asks whether to keep current followers or review them.
 - **Your profile shows a small badge** for which mode you're in.
 
-**Default.** Friends only is safest and simplest to explain. People can opt in to Public.
+**Default.** Friends only (decided). People can switch to Public. Since friends are mutual, Public means searchable and anyone can see your reviews and shelf; becoming friends still takes an accepted request.
 
 **Effort: M**, as part of feature 13.
+
+---
+
+### 15. Remove the flip-card carousel
+
+**Goal.** No left-and-right carousel of movies anywhere in the app. Tapping a movie, including while the Shelf is narrowed to All, Not reviewed, or Reviewed, goes straight to that movie's detail screen.
+
+**Today.** Tapping a Shelf poster opens the flip-card viewer (`TitleDeckView`): cards side by side with neighbors peeking in, swipe or arrow buttons for next and previous, and tap to flip a card to its details. This is the only carousel in the app. Tonight, Reviews, and search results already open the detail screen.
+
+**How it works**
+- **Tapping a Shelf poster** opens the detail screen, the same one Tonight and Reviews use. The back button returns to the Shelf, with its search, review chips, filters, sort, and scroll position kept.
+- **The poster zoom** into the detail screen can stay, so the move still feels connected. It just lands on details instead of a card.
+- **No next or previous** on the detail screen. To see another movie, go back and tap it.
+- **Nothing is lost.** Everything on the flip-card back (film info, last watched and watch count, tags, where a disc is, trailer, IMDb, Watched and Reviewed checks) is already on the detail screen.
+
+**Code changes**
+- `ShelfView`: the poster tap pushes `.titleDetail(id)` instead of `.titleDeck(ids:startID:)`.
+- Remove `Route.titleDeck`, its case in `RootTabView`, `Views/Deck/TitleDeckView.swift`, `ViewModels/TitleDeckViewModel.swift`, and `Views/Components/FlipCard.swift` (only the deck uses it). Move `cardZoomTransition` onto the detail screen route.
+- `TitleDetailViewModel.detailRows(for:)` is shared with the flip-card back. It stays, used only by the detail screen.
+- Update README (feature list and the Components folder note) and remove "the flip-card viewer follows it" from the shelf sorting notes.
+- **Tests:** `DeckTests.swift` and the UI test `testFlipCardAndStepThroughDeck` get removed. A UI test that a poster tap opens the detail screen replaces them, once tests resume.
+
+**Rubric.** Flip cards were a class rubric item (Project 1 Option B), but grading doesn't need them anymore (open question 12), so this is clear to build.
+
+**Effort: S**
+
+---
+
+### 16. Small fixes: Rewatch and loan return dates
+
+**Rewatch on Tonight.** The "Reviewed it?" group becomes "Seen it?" with **Not reviewed yet**, **Anything**, and **Rewatch**, where Rewatch means at least one logged watch. The automatic adjustments with "Your rating" are rechecked, since a rewatch no longer implies a rating.
+
+**Loan return dates.** Loaning a disc (Move › Loaned out) gets an optional **Due back** date. On that day a notification says "Ask Sam for Inception back". It's cancelled when you mark the disc returned. The detail screen shows "Loaned to Sam since Oct 3 · due Nov 1". Notification permission is asked the first time a due date is set, not at launch.
+
+**Data changes.** A `loanDueOn` date on the title, which means data version 4 (a lightweight upgrade).
+
+**Effort: S**
 
 ---
 
@@ -519,16 +621,18 @@ Keeping a small bundled catalog as an offline fallback is a good idea.
 ## Open questions
 
 1. ~~**Last-watched sort.**~~ Decided: never-watched titles first, then the longest since watching.
-2. **"Rewatch" on Tonight.** Should it mean "reviewed" as it does today, or "watched before", once watch history exists?
-3. **Loaned out.** Track who has it and since when? Add a reminder to ask for it back?
+2. ~~**"Rewatch" on Tonight.**~~ Decided: "watched before" (at least one logged watch). "Not reviewed yet" stays as its own option. Milestone 7.
+3. ~~**Loaned out.**~~ Decided: keep who and since when, and add an optional return date when loaning, with a notification that day. Milestone 7.
 4. ~~**Search style.**~~ Decided: native iOS search with the system navigation bar on Shelf.
-5. **Family ages.** Use the youngest viewer's age to suggest film ratings on Tonight, or just store the ages?
-6. **Social server.** CloudKit for iPhone-only (recommended), or Supabase or Firebase if Android or a website is planned?
-7. **Account default.** Friends only (recommended) or Public?
+5. ~~**Family ages.**~~ Decided: suggest film ratings from the youngest viewer's age on Tonight, with an off switch in Settings › Family.
+6. ~~**Social server.**~~ Decided: CloudKit, with Sign in with Apple only.
+7. ~~**Account default.**~~ Decided: Friends only.
 8. ~~**Beta catalog.**~~ Decided: switch to the TMDB API in Milestone 0, with the bundled 200 movies as the offline fallback.
-9. **Developer account.** Do you already have an Apple Developer Program membership? (Bundle ID decided: keep `brownk1.MovieCollection`.)
+9. **Developer account.** Not enrolled yet (November 9, 2026). Needed for TestFlight, CloudKit, and Sign in with Apple, so Milestone 5 waits on it. (Bundle ID decided: keep `brownk1.MovieCollection`.)
 10. ~~**Devices.**~~ Decided: iPhone only for the beta.
-11. **Buy-link region.** US only to start, or the user's country?
+11. ~~**Buy-link region.**~~ Decided for now: the phone's country, falling back to the US. Store search links are US sites; other countries use TMDB's where-to-watch page.
+12. ~~**Flip cards and the class rubric.**~~ Decided: grading doesn't need them anymore, so Milestone 6 can remove the carousel.
+13. **Feedback and report email.** You're setting up a dedicated address. Send it over to fill in `AppInfo.feedbackEmail`, which turns on "Send feedback" and gives Social's reports somewhere to go.
 
 ---
 

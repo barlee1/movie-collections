@@ -49,23 +49,27 @@ extension CollectionStore {
             title.storageLocation = nil
             title.loanedTo = nil
             title.loanedOn = nil
+            title.loanDueOn = nil
             title.locationBeforeLoanID = nil
         }
     }
 
     // MARK: - Watch history
 
-    /// Logs a watch on the given date.
+    /// Logs a watch on the given date, with the family members who were there.
     @discardableResult
-    func logWatch(of title: OwnedTitle, on date: Date, note: String = "") throws -> WatchEvent {
+    func logWatch(of title: OwnedTitle, on date: Date, note: String = "", viewers: [FamilyMember] = []) throws -> WatchEvent {
         let watch = addWatchEvent(to: title, date: date, note: note)
+        watch.viewers = viewers
         try context.save()
         return watch
     }
 
-    func updateWatch(_ watch: WatchEvent, date: Date, note: String) throws {
+    /// Changes a watch. Nil `viewers` keeps who was there as it is.
+    func updateWatch(_ watch: WatchEvent, date: Date, note: String, viewers: [FamilyMember]? = nil) throws {
         watch.date = date
         watch.note = note
+        if let viewers { watch.viewers = viewers }
         try context.save()
     }
 
@@ -150,17 +154,22 @@ extension CollectionStore {
     }
 
     /// Moves a disc somewhere else. Moving it to Loaned out records who has
-    /// it and when, and remembers where it came from.
-    func move(_ title: OwnedTitle, to location: StorageLocation, loanedTo borrower: String? = nil, on date: Date = .now) throws {
+    /// it, since when, when it's due back (optional), and where it came from.
+    func move(
+        _ title: OwnedTitle, to location: StorageLocation, loanedTo borrower: String? = nil,
+        on date: Date = .now, dueBack: Date? = nil
+    ) throws {
         if location.role == .loanedOut {
             if !title.isLoanedOut {
                 title.locationBeforeLoanID = title.storageLocation?.id
             }
             title.loanedTo = borrower?.trimmed.isEmpty == false ? borrower?.trimmed : nil
             title.loanedOn = date
+            title.loanDueOn = dueBack
         } else {
             title.loanedTo = nil
             title.loanedOn = nil
+            title.loanDueOn = nil
             title.locationBeforeLoanID = nil
         }
         title.storageLocation = location
@@ -242,9 +251,10 @@ extension CollectionStore {
 
     // MARK: - Deleting everything
 
-    /// Removes every title, tag, and custom location. Shelf and Loaned out stay.
+    /// Removes every title, tag, family member, and custom location. Shelf and Loaned out stay.
     func deleteAllData() throws {
         for title in try allTitles() { context.delete(title) }
+        for member in try allFamilyMembers() { context.delete(member) }
         for tag in try allTags() { context.delete(tag) }
         for location in try allLocations() where !location.isBuiltIn { context.delete(location) }
         try context.save()

@@ -75,13 +75,12 @@ struct RootTabView: View {
     @ViewBuilder
     private func destination(for route: Route) -> some View {
         switch route {
-        case .titleDetail(let id, let fromTonight):
+        case .titleDetail(let id, let fromTonight, let fromShelf):
             TitleDetailView(titleID: id, fromTonight: fromTonight, appModel: appModel)
                 // A new identity per title, so "Pick another" builds a fresh screen.
                 .id(id)
-        case .titleDeck(let ids, let startID):
-            TitleDeckView(ids: ids, startID: startID, appModel: appModel)
-                .cardZoomTransition(sourceID: startID, in: cardZoomNamespace)
+                // Only the Shelf's posters are zoom sources.
+                .cardZoomTransition(sourceID: id, in: fromShelf ? cardZoomNamespace : nil)
         case .reviews(let highlightedID):
             ReviewsView(highlightedTitleID: highlightedID)
         case .addTitle(let prefillMovieID):
@@ -101,6 +100,8 @@ struct RootTabView: View {
             ManageLocationsView()
         case .manageTags:
             ManageTagsView()
+        case .manageFamily:
+            ManageFamilyView()
         case .friends:
             // Following friends needs a profile, so guests sign in first.
             if appModel.isGuest {

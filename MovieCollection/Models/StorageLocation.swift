@@ -6,7 +6,7 @@
 //  custom one such as "Living room cabinet". Shelf and Loaned out are built
 //  in: they can be renamed but not deleted, since the app relies on them.
 //  Used in: OwnedTitle, CollectionStore, the edit and add forms, Settings › Locations.
-//  Part of SchemaV2 (see SchemaVersions.swift); the app uses the StorageLocation typealias.
+//  Part of SchemaV4 (see SchemaVersions.swift); the app uses the StorageLocation typealias.
 //
 
 import Foundation
@@ -25,7 +25,7 @@ nonisolated enum BuiltInLocation: String, Codable, CaseIterable, Sendable {
     }
 }
 
-extension SchemaV2 {
+extension SchemaV4 {
     @Model
     final class StorageLocation {
         /// Stable across renames, so a loaned disc remembers where to go back to.

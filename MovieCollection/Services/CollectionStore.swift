@@ -25,7 +25,7 @@ final class CollectionStore {
     /// - Parameter inMemory: True for previews and tests, which need a throwaway store.
     static func makeContainer(inMemory: Bool = false) throws -> ModelContainer {
         try ModelContainer(
-            for: Schema(versionedSchema: SchemaV2.self),
+            for: Schema(versionedSchema: SchemaV4.self),
             migrationPlan: RewindClubMigrationPlan.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: inMemory)
         )

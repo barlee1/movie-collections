@@ -80,6 +80,8 @@ struct HalfStarPicker: View {
     @Binding var rating: Double
     var size: CGFloat = 34
     var spacing: CGFloat = 8
+    /// What VoiceOver calls the picker, e.g. "Sam's rating".
+    var accessibilityName = "Your rating"
 
     var body: some View {
         StarRatingView(rating: rating, size: size, spacing: spacing)
@@ -99,7 +101,7 @@ struct HalfStarPicker: View {
             .dynamicTypeSize(...DynamicTypeSize.large)
             .sensoryFeedback(.selection, trigger: rating)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Your rating")
+            .accessibilityLabel(accessibilityName)
             .accessibilityValue(StarRatingView.accessibilityText(for: rating))
             .accessibilityAdjustableAction { direction in
                 switch direction {

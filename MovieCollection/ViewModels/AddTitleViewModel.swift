@@ -38,6 +38,7 @@ final class AddTitleViewModel {
     var location: StorageLocation?
     var loanedTo = ""
     var loanedOn = Date.now
+    var dueBack: Date?
     var tags: [Tag] = []
     var service: StreamingService?
     var hasWatched = false
@@ -172,7 +173,9 @@ final class AddTitleViewModel {
         guard appModel.add(newTitle) else { return nil }
         // Saved on the Shelf by default; move it if somewhere else was picked.
         if format.isPhysical, let location, location !== newTitle.storageLocation {
-            appModel.move(newTitle, to: location, loanedTo: location.role == .loanedOut ? loanedTo : nil, on: loanedOn)
+            appModel.move(
+                newTitle, to: location, loanedTo: location.role == .loanedOut ? loanedTo : nil,
+                on: loanedOn, dueBack: dueBack)
         }
         if !tags.isEmpty { appModel.setTags(tags, on: newTitle) }
         return newTitle.persistentModelID

@@ -15,13 +15,14 @@ extension AppViewModel {
     // MARK: - Watch history
 
     @discardableResult
-    func logWatch(of title: OwnedTitle, on date: Date = .now, note: String = "") -> Bool {
-        perform("log that watch") { try store.logWatch(of: title, on: min(date, .now), note: note) }
+    func logWatch(of title: OwnedTitle, on date: Date = .now, note: String = "", viewers: [FamilyMember] = []) -> Bool {
+        perform("log that watch") { try store.logWatch(of: title, on: min(date, .now), note: note, viewers: viewers) }
     }
 
+    /// Nil `viewers` keeps who was there as it is.
     @discardableResult
-    func updateWatch(_ watch: WatchEvent, date: Date, note: String) -> Bool {
-        perform("update that watch") { try store.updateWatch(watch, date: min(date, .now), note: note) }
+    func updateWatch(_ watch: WatchEvent, date: Date, note: String, viewers: [FamilyMember]? = nil) -> Bool {
+        perform("update that watch") { try store.updateWatch(watch, date: min(date, .now), note: note, viewers: viewers) }
     }
 
     @discardableResult
@@ -73,10 +74,27 @@ extension AppViewModel {
         perform("delete that location") { try store.deleteLocation(location) }
     }
 
-    /// Moves a disc. Loaned out records who has it and since when.
+    /// Moves a disc. Loaned out records who has it, since when, and when it's
+    /// due back. A due date asks for notification permission the first time.
     @discardableResult
-    func move(_ title: OwnedTitle, to location: StorageLocation, loanedTo borrower: String? = nil, on date: Date = .now) -> Bool {
-        perform("move \(title.title)") { try store.move(title, to: location, loanedTo: borrower, on: date) }
+    func move(
+        _ title: OwnedTitle, to location: StorageLocation, loanedTo borrower: String? = nil,
+        on date: Date = .now, dueBack: Date? = nil
+    ) -> Bool {
+        let isLoan = location.role == .loanedOut
+        let moved = perform("move \(title.title)") {
+            try store.move(title, to: location, loanedTo: borrower, on: date, dueBack: isLoan ? dueBack : nil)
+        }
+        if moved, isLoan, dueBack != nil {
+            // Schedule again once permission is answered, so this first reminder isn't missed.
+            let reminders = loanReminders
+            let loans = LoanReminder.reminders(for: titles)
+            Task {
+                await reminders.requestPermissionIfNeeded()
+                await reminders.sync(loans)
+            }
+        }
+        return moved
     }
 
     @discardableResult

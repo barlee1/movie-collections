@@ -4,7 +4,7 @@
 //
 //  Purpose: How the user's own tags look (a colored chip per tag), and the
 //  sheet for choosing a title's tags or making a new one.
-//  Used in: TitleDetailView, AddTitleView, EditTitleSheet, the flip-card back,
+//  Used in: TitleDetailView, AddTitleView, EditTitleSheet,
 //  ShelfFilterSheet, TonightView, Settings › Tags.
 //
 

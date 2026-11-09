@@ -3,9 +3,9 @@
 //  MovieCollection
 //
 //  Purpose: Settings, opened from the gear on Profile: account (name and
-//  photo), streaming services, organizing (locations and tags), data (import, CSV export, sample movies,
-//  delete everything), and About (feedback, privacy, TMDB credit, version).
-//  Later milestones add Family and Suggestions here.
+//  photo), streaming services, suggestions ("Own it instead"), family, organizing (locations and
+//  tags), data (import, CSV export, sample movies, delete everything), and About (feedback,
+//  privacy, TMDB and JustWatch credits, version).
 //  Used in: RootTabView (Route.settings).
 //
 
@@ -29,6 +29,8 @@ struct SettingsView: View {
 
                 accountSection
                 servicesSection
+                suggestionsSection
+                familySection
                 organizingSection
                 dataSection
                 aboutSection
@@ -64,7 +66,7 @@ struct SettingsView: View {
                 }
             }
         } message: {
-            Text("This removes every title, review, and your profile from this phone. It can't be undone. Export your shelf first to keep a copy.")
+            Text("This removes every title, review, family member, and your profile from this phone. It can't be undone. Export your shelf first to keep a copy.")
         }
         .alert(message ?? "", isPresented: Binding(get: { message != nil }, set: { if !$0 { message = nil } })) {
             Button("OK", role: .cancel) {}
@@ -103,13 +105,48 @@ struct SettingsView: View {
         }
     }
 
+    private var suggestionsSection: some View {
+        @Bindable var appModel = appModel
+        return section("Suggestions") {
+            Toggle(isOn: $appModel.showsOwnItSuggestions) {
+                Label {
+                    Text("Own it instead")
+                } icon: {
+                    Image(systemName: "bag")
+                        .frame(width: 24)
+                }
+                .font(Theme.Fonts.body(16, weight: .semibold))
+            }
+            .tint(Theme.Colors.action)
+            .frame(minHeight: 44)
+            Text("On movies you stream, show eBay and digital store links, so you can keep them even if you cancel the service.")
+                .font(Theme.Fonts.body(13, relativeTo: .footnote))
+                .foregroundStyle(Theme.Colors.textMuted)
+        }
+    }
+
+    private var familySection: some View {
+        section("Family") {
+            row(
+                "Family members",
+                detail: appModel.hasFamily ? appModel.familyMembers.map(\.name).joined(separator: ", ") : "None yet",
+                systemImage: "person.2"
+            ) { router.push(.manageFamily) }
+            Text("Who has seen what, their own ratings, and Tonight's \"Who's watching?\". Stays on this phone.")
+                .font(Theme.Fonts.body(13, relativeTo: .footnote))
+                .foregroundStyle(Theme.Colors.textMuted)
+                .padding(.top, 4)
+        }
+    }
+
     private var organizingSection: some View {
         section("Organizing") {
             row("Locations", detail: "\(appModel.locations.count)", systemImage: "mappin.and.ellipse") { router.push(.manageLocations) }
             row("Tags", detail: appModel.tags.isEmpty ? "None yet" : "\(appModel.tags.count)", systemImage: "tag") { router.push(.manageTags) }
             if !appModel.loanedOutTitles.isEmpty {
                 Text("Loaned out: " + appModel.loanedOutTitles.map { title in
-                    title.loanedTo.map { "\(title.title) (\($0))" } ?? title.title
+                    let details = [title.loanedTo, title.loanDueOn.map { "due \($0.displayText)" }].compactMap { $0 }
+                    return details.isEmpty ? title.title : "\(title.title) (\(details.joined(separator: ", ")))"
                 }.joined(separator: ", "))
                 .font(Theme.Fonts.body(13, relativeTo: .footnote))
                 .foregroundStyle(Theme.Colors.textMuted)
@@ -165,6 +202,11 @@ struct SettingsView: View {
                     Link("themoviedb.org", destination: tmdbURL)
                         .tint(Theme.Colors.link)
                 }
+                Text(AppInfo.justWatchCredit)
+                if let justWatchURL = AppInfo.justWatchURL {
+                    Link("justwatch.com", destination: justWatchURL)
+                        .tint(Theme.Colors.link)
+                }
                 Text(AppInfo.versionText)
             }
             .font(Theme.Fonts.body(13, relativeTo: .footnote))
@@ -206,6 +248,7 @@ struct SettingsView: View {
                 Text(detail)
                     .font(Theme.Fonts.body(14, relativeTo: .subheadline))
                     .foregroundStyle(Theme.Colors.textMuted)
+                    .lineLimit(1)
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(Theme.Colors.textMuted)

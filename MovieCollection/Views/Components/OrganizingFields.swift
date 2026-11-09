@@ -3,18 +3,25 @@
 //  MovieCollection
 //
 //  Purpose: Form pieces shared by the add form and the edit sheet: where a
-//  disc is (with who borrowed it when it's loaned out), and a title's tags.
-//  Used in: AddTitleView, EditTitleSheet.
+//  disc is (with who borrowed it, since when, and an optional due-back date
+//  when it's loaned out), and a title's tags.
+//  Used in: AddTitleView, EditTitleSheet, MoveDiscSheet.
 //
 
 import SwiftUI
 
-/// Chips for every location, plus "who has it" and "since" when Loaned out is picked.
+/// Chips for every location, plus "who has it", "since", and an optional
+/// "due back" date when Loaned out is picked.
 struct DiscLocationPicker: View {
     let locations: [StorageLocation]
     @Binding var selection: StorageLocation?
     @Binding var loanedTo: String
     @Binding var loanedOn: Date
+    /// When it should come back, or nil for no date.
+    @Binding var dueBack: Date?
+
+    /// A new due date starts two weeks out.
+    static let defaultLoanDays = 14
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -34,6 +41,21 @@ struct DiscLocationPicker: View {
                         .accessibilityIdentifier("location.loanedTo")
                     DatePicker("Since", selection: $loanedOn, in: ...Date.now, displayedComponents: .date)
                         .font(Theme.Fonts.body(16))
+                    Toggle("Due back", isOn: hasDueDate)
+                        .font(Theme.Fonts.body(16))
+                        .tint(Theme.Colors.action)
+                    if let due = dueBack {
+                        DatePicker(
+                            "Due back on",
+                            selection: Binding(get: { due }, set: { dueBack = $0 }),
+                            in: Calendar.current.startOfDay(for: .now)...,
+                            displayedComponents: .date
+                        )
+                        .font(Theme.Fonts.body(16))
+                        Text("You'll get a reminder that morning to ask for it back.")
+                            .font(Theme.Fonts.body(12, relativeTo: .caption))
+                            .foregroundStyle(Theme.Colors.textMuted)
+                    }
                 }
                 .padding(.top, 4)
                 .transition(.opacity)
@@ -43,6 +65,16 @@ struct DiscLocationPicker: View {
                 .foregroundStyle(Theme.Colors.textMuted)
         }
         .animation(.snappy, value: selection?.role)
+        .animation(.snappy, value: dueBack == nil)
+    }
+
+    private var hasDueDate: Binding<Bool> {
+        Binding(
+            get: { dueBack != nil },
+            set: { isOn in
+                dueBack = isOn ? Calendar.current.date(byAdding: .day, value: Self.defaultLoanDays, to: .now) : nil
+            }
+        )
     }
 }
 

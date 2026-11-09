@@ -4,12 +4,15 @@
 //
 //  Purpose: Live movie search and details from The Movie Database (TMDB) API,
 //  so the add form, cover scanner, and spreadsheet import can find any movie,
-//  not just the 200 bundled ones. The key lives in Secrets.plist (not in git);
+//  not just the 200 bundled ones. Also where a movie can be bought, for the
+//  detail screen's "Own it instead" card. The key lives in Secrets.plist (not in git);
 //  without it the app quietly uses only the bundled catalog.
 //  Used in: AppViewModel.
 //
 //  Required credit (shown on Profile › About):
 //  "This product uses the TMDB API but is not endorsed or certified by TMDB."
+//  Where-to-buy data comes from JustWatch through TMDB, which must be credited
+//  wherever it's shown (see AppInfo.justWatchCredit).
 //
 
 import Foundation
@@ -21,6 +24,14 @@ nonisolated protocol RemoteMovieCatalog: Sendable {
     func searchMovies(_ query: String, year: Int?) async throws -> [Movie]
     /// One movie with every detail filled in.
     func movieDetails(id: Int) async throws -> Movie
+    /// Stores that sell the movie in a country (an ISO code like "US").
+    /// Nil if the source doesn't know.
+    func purchaseOptions(movieID: Int, region: String) async throws -> PurchaseOptions?
+}
+
+extension RemoteMovieCatalog {
+    /// Catalogs without where-to-buy data (like test fakes) don't know.
+    func purchaseOptions(movieID: Int, region: String) async throws -> PurchaseOptions? { nil }
 }
 
 nonisolated struct TMDBClient: RemoteMovieCatalog {
@@ -90,6 +101,11 @@ nonisolated struct TMDBClient: RemoteMovieCatalog {
         return try Self.parseDetails(data)
     }
 
+    func purchaseOptions(movieID: Int, region: String) async throws -> PurchaseOptions? {
+        let data = try await get("movie/\(movieID)/watch/providers", [])
+        return try Self.parsePurchaseOptions(data, region: region)
+    }
+
     /// Builds the request for a TMDB path. Separate from `get` so tests can check it.
     func request(_ path: String, _ queryItems: [URLQueryItem]) -> URLRequest {
         var components = URLComponents(url: Self.baseURL.appending(path: path), resolvingAgainstBaseURL: false)
@@ -154,6 +170,19 @@ nonisolated struct TMDBClient: RemoteMovieCatalog {
         let releaseDates: ReleaseDates?
     }
 
+    private struct ProvidersResponse: Decodable {
+        struct Country: Decodable {
+            struct Provider: Decodable {
+                let providerId: Int
+                let providerName: String
+                let displayPriority: Int?
+            }
+            let link: String?
+            let buy: [Provider]?
+        }
+        let results: [String: Country]
+    }
+
     /// TMDB's JSON uses snake_case keys like `release_date`.
     private static var decoder: JSONDecoder {
         let decoder = JSONDecoder()
@@ -202,6 +231,16 @@ nonisolated struct TMDBClient: RemoteMovieCatalog {
             cast: Array(cast),
             filmRating: usCertification(details.releaseDates)
         )
+    }
+
+    /// Where the movie is sold in one country. A country with no listing at
+    /// all means it isn't sold or streamed there, so it can't be bought.
+    static func parsePurchaseOptions(_ data: Data, region: String) throws -> PurchaseOptions {
+        let country = try decoder.decode(ProvidersResponse.self, from: data).results[region.uppercased()]
+        let stores = (country?.buy ?? [])
+            .sorted { ($0.displayPriority ?? .max) < ($1.displayPriority ?? .max) }
+            .map { PurchaseOptions.Store(id: $0.providerId, name: $0.providerName) }
+        return PurchaseOptions(stores: stores, region: region.uppercased(), watchPageURL: country?.link.flatMap(URL.init(string:)))
     }
 
     /// The US rating, preferring the theatrical release (type 3) over others.

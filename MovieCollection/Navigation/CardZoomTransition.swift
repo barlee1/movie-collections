@@ -2,16 +2,16 @@
 //  CardZoomTransition.swift
 //  MovieCollection
 //
-//  Purpose: Lets a tapped shelf poster zoom into the flip-card viewer.
+//  Purpose: Lets a tapped shelf poster zoom into the title's detail screen.
 //  RootTabView provides the shared namespace; the shelf marks each poster as
-//  a zoom source, and the viewer zooms in from the tapped one.
+//  a zoom source, and the detail screen zooms in from the tapped one.
 //  Used in: RootTabView, ShelfView.
 //
 
 import SwiftUI
 
 extension EnvironmentValues {
-    /// The namespace shelf posters and the card viewer share for the zoom transition.
+    /// The namespace shelf posters and the detail screen share for the zoom transition.
     @Entry var cardZoomNamespace: Namespace.ID? = nil
 }
 

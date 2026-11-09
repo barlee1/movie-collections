@@ -6,13 +6,13 @@
 //  "Date night". A title can have any number of tags. Names are unique,
 //  ignoring capitals (CollectionStore enforces this).
 //  Used in: OwnedTitle, CollectionStore, detail, forms, filters, Tonight, Settings › Tags.
-//  Part of SchemaV2 (see SchemaVersions.swift); the app uses the Tag typealias.
+//  Part of SchemaV4 (see SchemaVersions.swift); the app uses the Tag typealias.
 //
 
 import Foundation
 import SwiftData
 
-extension SchemaV2 {
+extension SchemaV4 {
     @Model
     final class Tag {
         var id: UUID

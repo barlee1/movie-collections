@@ -3,7 +3,7 @@
 //  MovieCollection
 //
 //  Purpose: The Shelf's filter sheet: chips for format, service, film
-//  rating, where a disc is (like Loaned out), and tags. Search text lives in
+//  rating, where a disc is (like Loaned out), tags, and family members who haven't seen it. Search text lives in
 //  the search field; this is for narrowing by where and how you have a
 //  title. Results update live behind the sheet.
 //  Used in: ShelfView (the Filter button).
@@ -32,6 +32,9 @@ struct ShelfFilterSheet: View {
                     if !viewModel.tagOptions.isEmpty {
                         idChipGroup("Tags", options: viewModel.tagOptions.map { ($0.id, $0.name) }, selection: $viewModel.filters.tagIDs)
                     }
+                    if viewModel.appModel.hasFamily {
+                        notSeenByGroup
+                    }
                 }
                 .padding(.horizontal, Theme.Spacing.page)
                 .padding(.vertical, 16)
@@ -58,6 +61,26 @@ struct ShelfFilterSheet: View {
         }
         .tint(Theme.Colors.action)
         .presentationDetents([.medium, .large])
+    }
+
+    /// Family members to find what they haven't seen. Picking several shows
+    /// titles none of them have seen.
+    private var notSeenByGroup: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionLabel(text: "Not seen by", size: 12)
+            FlowLayout(spacing: 8) {
+                if let you = viewModel.appModel.familyYou {
+                    FamilyMemberChip(you: you, isOn: viewModel.filters.notSeenByYou) {
+                        viewModel.filters.notSeenByYou.toggle()
+                    }
+                }
+                ForEach(viewModel.appModel.familyMembers) { member in
+                    FamilyMemberChip(member: member, isOn: viewModel.filters.notSeenByIDs.contains(member.id)) {
+                        viewModel.filters.notSeenByIDs.toggle(member.id)
+                    }
+                }
+            }
+        }
     }
 
     /// Chips for saved things (locations, tags) picked by ID.

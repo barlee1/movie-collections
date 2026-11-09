@@ -100,8 +100,8 @@ private struct SwipeBackEnabler: UIViewControllerRepresentable {
             guard (navigationController?.viewControllers.count ?? 0) > 1 else { return false }
 
             // The swipe-anywhere back gesture steps aside when the swipe starts on
-            // something that scrolls sideways (like the flip-card row), so that
-            // swipe moves between cards instead of leaving the screen.
+            // something that scrolls sideways (like Tonight's mood chips), so that
+            // swipe scrolls the row instead of leaving the screen.
             if gestureRecognizer === navigationController?.interactiveContentPopGestureRecognizer,
                 let view = gestureRecognizer.view,
                 startsOnHorizontalScroller(view.hitTest(gestureRecognizer.location(in: view), with: nil))

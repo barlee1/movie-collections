@@ -4,7 +4,8 @@
 //
 //  Purpose: One title's detail screen: poster, format, where a disc is (with
 //  Move and Mark returned), film info, tags, trailer and IMDb links, watch
-//  history, and review, plus Edit. From Tonight it also
+//  history, review, who in the family has seen it, and for Streaming titles
+//  "Own it instead", plus Edit. From Tonight it also
 //  shows "Tonight's pick" and "Pick another".
 //  Used in: RootTabView (Route.titleDetail).
 //
@@ -49,8 +50,8 @@ struct TitleDetailView: View {
         .sheet(isPresented: $viewModel.isShowingWatchSheet) {
             if let title = viewModel.title {
                 let watch = viewModel.editingWatch
-                WatchSheet(titleName: title.title, watch: watch) { date, note in
-                    viewModel.saveWatch(date: date, note: note)
+                WatchSheet(titleName: title.title, watch: watch, family: viewModel.appModel.familyMembers) { date, note, viewers in
+                    viewModel.saveWatch(date: date, note: note, viewers: viewers)
                 } onDelete: {
                     if let watch { viewModel.deleteWatch(watch) }
                 }
@@ -63,8 +64,8 @@ struct TitleDetailView: View {
         }
         .sheet(isPresented: $viewModel.isMovingDisc) {
             if let title = viewModel.title {
-                MoveDiscSheet(title: title, locations: viewModel.appModel.locations) { location, borrower, date in
-                    viewModel.appModel.move(title, to: location, loanedTo: borrower, on: date)
+                MoveDiscSheet(title: title, locations: viewModel.appModel.locations) { location, borrower, date, dueBack in
+                    viewModel.appModel.move(title, to: location, loanedTo: borrower, on: date, dueBack: dueBack)
                 }
             }
         }
@@ -105,6 +106,14 @@ struct TitleDetailView: View {
             .themeShadow(.md)
             .frame(maxWidth: .infinity)
 
+        if let genreAndRuntime = viewModel.genreAndRuntime {
+            Text(genreAndRuntime)
+                .font(Theme.Fonts.body(15, relativeTo: .subheadline))
+                .foregroundStyle(Theme.Colors.textMuted)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+        }
+
         location(for: title)
 
         VStack(alignment: .leading, spacing: 4) {
@@ -135,6 +144,17 @@ struct TitleDetailView: View {
         }
 
         progress(for: title)
+        family(for: title)
+
+        if viewModel.showsOwnItInstead {
+            OwnItInsteadCard(title: title, state: viewModel.ownItState) {
+                viewModel.startEditing()
+            }
+            // Looks again if the title's format, service, or catalog match changes.
+            .task(id: "\(title.format.rawValue)-\(title.catalogID ?? 0)") {
+                await viewModel.loadOwnItInstead()
+            }
+        }
 
         if viewModel.fromTonight {
             Button("Pick another") { pickAnother() }
@@ -221,6 +241,89 @@ struct TitleDetailView: View {
         .animation(.snappy(duration: 0.25), value: title.isReviewed)
     }
 
+    // MARK: - Family
+
+    /// One row per family member: a seen check, their last watch, and their
+    /// own stars. Hidden until the user adds someone in Settings › Family.
+    @ViewBuilder
+    private func family(for title: OwnedTitle) -> some View {
+        if let summary = viewModel.familySummary {
+            VStack(alignment: .leading, spacing: 10) {
+                SectionLabel(text: "Family", size: 12)
+                Text(summary)
+                    .font(Theme.Fonts.body(14, weight: .semibold, relativeTo: .subheadline))
+                    .foregroundStyle(Theme.Colors.textMuted)
+                    .accessibilityIdentifier("detail.familySummary")
+
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(viewModel.familyRows) { row in
+                        familyRow(row)
+                    }
+                }
+            }
+            .confirmationDialog(
+                "Mark \(viewModel.confirmingUnseen?.name ?? "them") as not seen?",
+                isPresented: Binding(
+                    get: { viewModel.confirmingUnseen != nil },
+                    set: { if !$0 { viewModel.confirmingUnseen = nil } }
+                ),
+                titleVisibility: .visible
+            ) {
+                Button("Not seen", role: .destructive) { viewModel.confirmUnseen() }
+            } message: {
+                Text(viewModel.unseenMessage)
+            }
+        }
+    }
+
+    private func familyRow(_ row: TitleDetailViewModel.FamilyRow) -> some View {
+        HStack(alignment: .center, spacing: 10) {
+            Button {
+                viewModel.setSeen(!row.hasSeen, by: row.member)
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: row.hasSeen ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(row.hasSeen ? Theme.Colors.action : Theme.Colors.textMuted)
+                    FamilyAvatar(member: row.member, size: 30)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(row.member.name)
+                            .font(Theme.Fonts.body(15, weight: .semibold))
+                        Text(row.detail)
+                            .font(Theme.Fonts.body(12, relativeTo: .caption))
+                            .foregroundStyle(Theme.Colors.textMuted)
+                    }
+                }
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(row.member.name), \(row.detail)")
+            .accessibilityValue(row.hasSeen ? "Seen" : "Not seen")
+            .accessibilityHint(row.hasSeen ? "Marks as not seen" : "Marks as seen")
+            .accessibilityAddTraits(.isToggle)
+
+            Spacer(minLength: 4)
+
+            // Their own stars. Rating it also marks it seen.
+            HalfStarPicker(
+                rating: Binding(get: { row.rating ?? 0 }, set: { viewModel.setFamilyRating($0, by: row.member) }),
+                size: 17,
+                spacing: 3,
+                accessibilityName: "\(row.member.name)'s rating"
+            )
+            .contextMenu {
+                if row.rating != nil {
+                    Button("Clear \(row.member.name)'s rating", systemImage: "xmark") {
+                        viewModel.setFamilyRating(nil, by: row.member)
+                    }
+                }
+            }
+        }
+        .frame(minHeight: 48)
+        .padding(.horizontal, 4)
+    }
+
     // MARK: - Watch history, tags, and place
 
     /// "3rd watch · Oct 21, 2026" rows, newest first. Tap one to edit or delete it.
@@ -240,6 +343,11 @@ struct TitleDetailView: View {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("\(row.label) · \(row.watch.date.displayText)")
                                     .font(Theme.Fonts.body(15, weight: .semibold))
+                                if let viewers = TitleDetailViewModel.viewersText(for: row.watch) {
+                                    Text(viewers)
+                                        .font(Theme.Fonts.body(13, relativeTo: .footnote))
+                                        .foregroundStyle(Theme.Colors.textMuted)
+                                }
                                 if !row.watch.note.isEmpty {
                                     Text(row.watch.note)
                                         .font(Theme.Fonts.body(13, relativeTo: .footnote))
@@ -295,6 +403,9 @@ struct TitleDetailView: View {
                 TagView(
                     text: place, style: title.isLoanedOut ? .outline : .neutral,
                     systemImage: title.isLoanedOut ? "person.fill" : "mappin")
+                if let due = TitleDetailViewModel.dueText(for: title) {
+                    TagView(text: due, style: title.isLoanOverdue ? .main : .neutral, systemImage: "bell")
+                }
                 Button("Move") { viewModel.isMovingDisc = true }
                     .buttonStyle(.pill(.secondary, typeface: .body, fontSize: 14, height: 32, fullWidth: false))
                     .accessibilityLabel("Move this disc")

@@ -2,8 +2,8 @@
 //  TonightView.swift
 //  MovieCollection
 //
-//  Purpose: The Tonight tab: narrow the shelf by mood, genre, runtime,
-//  format, reviewed state, and film rating, then pick one at random.
+//  Purpose: The Tonight tab: narrow the shelf by who's watching, mood, genre,
+//  runtime, format, seen or reviewed state, and film rating, then pick one at random.
 //  Used in: RootTabView (Tonight tab).
 //
 
@@ -33,6 +33,10 @@ struct TonightView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .cardStyle(background: Theme.Colors.tintSecondary)
                     .accessibilityElement(children: .contain)
+                }
+
+                if viewModel.appModel.hasFamily {
+                    whosWatching
                 }
 
                 group("Mood", scrolls: true) {
@@ -78,7 +82,7 @@ struct TonightView: View {
                     }
                 }
 
-                group("Reviewed it?") {
+                group("Seen it?") {
                     ForEach(TonightViewModel.SeenOption.allCases) { option in
                         ChipButton(label: option.rawValue, isOn: viewModel.seen == option) {
                             viewModel.seen = option
@@ -121,6 +125,46 @@ struct TonightView: View {
     }
 
     // MARK: - Pieces
+
+    /// Family members on the couch, how unseen a pick should be, and the
+    /// film rating suggestion from the youngest one's age.
+    private var whosWatching: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            SectionLabel(text: "Who's watching?")
+            FlowLayout(spacing: 8) {
+                if let you = viewModel.appModel.familyYou {
+                    FamilyMemberChip(you: you, isOn: viewModel.includesYou) {
+                        viewModel.includesYou.toggle()
+                    }
+                }
+                ForEach(viewModel.appModel.familyMembers) { member in
+                    FamilyMemberChip(member: member, isOn: viewModel.viewerIDs.contains(member.id)) {
+                        viewModel.viewerIDs.toggle(member.id)
+                    }
+                }
+            }
+            if viewModel.viewerCount > 1 {
+                FlowLayout {
+                    ForEach(TonightViewModel.ViewerMode.allCases) { mode in
+                        ChipButton(label: mode.rawValue, isOn: viewModel.viewerMode == mode, size: .small) {
+                            viewModel.viewerMode = mode
+                        }
+                    }
+                }
+            }
+            if let label = viewModel.ageSuggestionLabel {
+                ChipButton(label: label, isOn: viewModel.usesAgeSuggestion, size: .small) {
+                    viewModel.usesAgeSuggestion.toggle()
+                }
+                .accessibilityHint("Shows only titles with these film ratings")
+                if viewModel.usesAgeSuggestion {
+                    Text("Titles without a film rating are left out. Tap to turn this off.")
+                        .font(Theme.Fonts.body(13, relativeTo: .footnote))
+                        .foregroundStyle(Theme.Colors.textMuted)
+                }
+            }
+        }
+    }
 
     /// A labeled row of chips. Mood and Genre scroll sideways; the rest wrap.
     @ViewBuilder
@@ -178,7 +222,7 @@ struct TonightView: View {
 }
 
 #Preview {
-    let appModel = AppViewModel.preview()
+    let appModel = AppViewModel.preview(withFamily: true)
     NavigationStack {
         TonightView()
     }

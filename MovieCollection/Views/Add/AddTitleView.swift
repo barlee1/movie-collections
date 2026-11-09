@@ -45,7 +45,8 @@ struct AddTitleView: View {
                             set: { viewModel.location = $0 }
                         ),
                         loanedTo: $viewModel.loanedTo,
-                        loanedOn: $viewModel.loanedOn
+                        loanedOn: $viewModel.loanedOn,
+                        dueBack: $viewModel.dueBack
                     )
                 }
                 TagsField(tags: $viewModel.tags)

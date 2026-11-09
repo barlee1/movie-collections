@@ -37,7 +37,8 @@ struct EditTitleSheet: View {
                             locations: viewModel.locationOptions,
                             selection: $viewModel.location,
                             loanedTo: $viewModel.loanedTo,
-                            loanedOn: $viewModel.loanedOn
+                            loanedOn: $viewModel.loanedOn,
+                        dueBack: $viewModel.dueBack
                         )
                     }
                     ratingSection
